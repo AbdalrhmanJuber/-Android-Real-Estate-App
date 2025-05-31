@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
+    <gradient xmlns:android="http://schemas.android.com/apk/res/android"
+        android:angle="45"
+        android:startColor="#F5F5DC"
+        android:endColor="#E8F5E9" />
+    <ImageView
+        android:src="@drawable/ic_home"
+        android:layout_width="100dp"
+        android:layout_height="100dp"
+        android:layout_gravity="center"
+        android:contentDescription="App logo"/>
+
+
+    android:fontFamily="@font/poppins_medium"
+    android:textSize="20sp"
+    android:textColor="#333333"
+
+</PreferenceScreen>
