@@ -3,34 +3,28 @@ package com.example.a1211769_courseproject;
 import android.app.Activity;
 import android.os.AsyncTask;
 
-import java.util.List;
-
 public class ConnectionAsyncTask extends AsyncTask<String, String, String> {
-    Activity activity;
+    protected Activity activity;
 
     public ConnectionAsyncTask(Activity activity) {
         this.activity = activity;
     }
 
     @Override
-    protected void onPreExecute(){
-        ((MainActivity) activity).setButtonText("connecting");
+    protected void onPreExecute() {
         super.onPreExecute();
-        ((MainActivity) activity).setProgress(true);
+        // This is now handled in subclasses
     }
 
     @Override
     protected String doInBackground(String... params) {
-        String result = HttpManager.getData(params[0]);
-        return result;
+        return HttpManager.getData(params[0]);
     }
 
     @Override
-    protected void onPostExecute(String result){
+    protected void onPostExecute(String result) {
         super.onPostExecute(result);
-        ((MainActivity) activity).setButtonText("connected");
-        ((MainActivity) activity).setProgress(false);
-        List<Property> properties = JsonParser.parseProperties(result);
-        ((MainActivity) activity).fillStudents(students);
+        // This is now handled in subclasses
     }
 }
+

@@ -101,7 +101,7 @@
                 app:layout_constraintTop_toBottomOf="@id/buttonConnect"
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintEnd_toEndOf="parent"
-                android:layout_marginTop="16dp"/>
+                android:layout_marginTop="16dp" />
 
             <!-- Loading indicator for API connection -->
             <ProgressBar
@@ -113,7 +113,7 @@
                 app:layout_constraintTop_toBottomOf="@id/buttonConnect"
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintEnd_toEndOf="parent"
-                android:layout_marginTop="16dp"/>
+                android:layout_marginTop="16dp" />
 
         </androidx.constraintlayout.widget.ConstraintLayout>
     </androidx.cardview.widget.CardView>
@@ -130,5 +130,18 @@
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent" />
+
+    <!-- Stylish copyright text at bottom -->
+    <TextView
+        android:id="@+id/textCopyright"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="© 2025 SmartEstate. All rights reserved."
+        android:textColor="#6B7280"
+        android:textSize="12sp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        android:layout_marginBottom="16dp" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

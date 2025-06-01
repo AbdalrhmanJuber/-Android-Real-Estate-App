@@ -46,4 +46,24 @@ public class JsonParser {
         }
         return result;
     }
+
+    public static List<Category> parseCategories(String jsonString) {
+        List<Category> categories = new ArrayList<>();
+        try {
+            JSONObject jsonObject = new JSONObject(jsonString);
+            JSONArray categoryArray = jsonObject.getJSONArray("categories");
+
+            for (int i = 0; i < categoryArray.length(); i++) {
+                JSONObject categoryObj = categoryArray.getJSONObject(i);
+                int id = categoryObj.getInt("id");
+                String name = categoryObj.getString("name");
+
+                Category category = new Category(id, name);
+                categories.add(category);
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return categories;
+    }
 }
