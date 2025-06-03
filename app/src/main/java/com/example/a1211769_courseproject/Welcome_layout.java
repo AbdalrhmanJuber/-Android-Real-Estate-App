@@ -78,14 +78,13 @@ public class Welcome_layout extends AppCompatActivity {
 
             if (result != null) {
                 try {
-                    List<Category> categories = JsonParser.parseCategories(result);
-
-                    if (categories != null && !categories.isEmpty()) {
-                        // Navigate to login/register screen
-                        Intent intent = new Intent(Welcome_layout.this, MainActivity.class);
+                    List<Category> categories = JsonParser.parseCategories(result);                    if (categories != null && !categories.isEmpty()) {
+                        // Navigate to login screen after successful API connection
+                        Intent intent = new Intent(Welcome_layout.this, LoginActivity.class);
                         intent.putExtra("jsonData", result);
                         startActivity(intent);
                         finish();
+                        overridePendingTransition(R.anim.fade_in, R.anim.fade_out);
                     } else {
                         showError("No categories found");
                     }
