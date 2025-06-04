@@ -36,10 +36,10 @@ public class PropertiesFragment extends Fragment implements PropertyAdapter.OnPr
     private LinearLayout layoutEmpty;
     private EditText editSearch;
     private Button btnFilterType, btnFilterLocation, btnFilterPrice;
-    
     private DatabaseHelper databaseHelper;
     private List<Property> allProperties;
     private String currentUserEmail;
+    private static final String API_URL = "https://mocki.io/v1/8345f53d-b99e-4d4d-b4cb-eea3042aa04f";
 
     @Nullable
     @Override
@@ -107,26 +107,11 @@ public class PropertiesFragment extends Fragment implements PropertyAdapter.OnPr
         btnFilterType.setOnClickListener(v -> showTypeFilterDialog());
         btnFilterLocation.setOnClickListener(v -> showLocationFilterDialog());
         btnFilterPrice.setOnClickListener(v -> showPriceFilterDialog());
-    }
-
-    private void loadProperties() {
+    }    private void loadProperties() {
         swipeRefresh.setRefreshing(true);
         
-        // Load properties from database
-        allProperties.clear();
-        allProperties.addAll(databaseHelper.getAllProperties());
-        
-        adapter.updateProperties(allProperties);
-        updateEmptyState();
-        
-        swipeRefresh.setRefreshing(false);
-        
-        if (allProperties.isEmpty()) {
-            Toast.makeText(getContext(), "No properties found. Loading sample data...", Toast.LENGTH_SHORT).show();
-            // If no properties, insert sample data
-            databaseHelper.insertSampleProperties();
-            loadProperties();
-        }
+        // Load properties from API instead of database
+        new PropertyConnectionTask().execute(API_URL);
     }
 
     private void updateEmptyState() {
@@ -268,12 +253,66 @@ public class PropertiesFragment extends Fragment implements PropertyAdapter.OnPr
         transaction.replace(R.id.fragment_container, reservationFragment);
         transaction.addToBackStack(null);
         transaction.commit();
-    }
-
-    @Override
+    }    @Override
     public void onResume() {
         super.onResume();
         // Refresh properties when returning to fragment
         loadProperties();
+    }
+
+    // Custom ConnectionAsyncTask for Properties Fragment
+    private class PropertyConnectionTask extends ConnectionAsyncTask {
+
+        public PropertyConnectionTask() {
+            super(getActivity());
+        }
+
+        @Override
+        protected void onPreExecute() {
+            super.onPreExecute();
+            swipeRefresh.setRefreshing(true);
+        }
+
+        @Override
+        protected void onPostExecute(String result) {
+            super.onPostExecute(result);
+            swipeRefresh.setRefreshing(false);
+
+            if (result != null) {
+                try {
+                    List<Property> properties = JsonParser.parseProperties(result);
+                    if (properties != null && !properties.isEmpty()) {
+                        allProperties.clear();
+                        allProperties.addAll(properties);
+                        adapter.updateProperties(allProperties);
+                        updateEmptyState();
+                        Toast.makeText(getContext(), "Properties loaded successfully", Toast.LENGTH_SHORT).show();
+                    } else {
+                        showError("No properties found");
+                    }
+                } catch (Exception e) {
+                    showError("Error parsing property data: " + e.getMessage());
+                }
+            } else {
+                showError("Failed to load properties. Please check your internet connection.");
+            }
+        }
+    }
+
+    private void showError(String message) {
+        Toast.makeText(getContext(), message, Toast.LENGTH_LONG).show();
+        // If API fails, try to load from local database as fallback
+        loadPropertiesFromDatabase();
+    }
+
+    private void loadPropertiesFromDatabase() {
+        allProperties.clear();
+        allProperties.addAll(databaseHelper.getAllProperties());
+        adapter.updateProperties(allProperties);
+        updateEmptyState();
+        
+        if (allProperties.isEmpty()) {
+            Toast.makeText(getContext(), "No local properties found. Please check your internet connection.", Toast.LENGTH_SHORT).show();
+        }
     }
 }

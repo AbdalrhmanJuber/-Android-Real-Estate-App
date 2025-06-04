@@ -99,8 +99,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
                 + "FOREIGN KEY(" + FAVORITE_USER_EMAIL + ") REFERENCES " + TABLE_USERS + "(" + KEY_EMAIL + "),"
                 + "FOREIGN KEY(" + FAVORITE_PROPERTY_ID + ") REFERENCES " + TABLE_PROPERTIES + "(" + PROPERTY_ID + ")" + ")";
         db.execSQL(CREATE_FAVORITES_TABLE);
-        
-        // Create reservations table
+          // Create reservations table
         String CREATE_RESERVATIONS_TABLE = "CREATE TABLE " + TABLE_RESERVATIONS + "("
                 + RESERVATION_ID + " INTEGER PRIMARY KEY AUTOINCREMENT,"
                 + RESERVATION_USER_EMAIL + " TEXT,"
@@ -114,8 +113,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
                 + "FOREIGN KEY(" + RESERVATION_PROPERTY_ID + ") REFERENCES " + TABLE_PROPERTIES + "(" + PROPERTY_ID + ")" + ")";
         db.execSQL(CREATE_RESERVATIONS_TABLE);
         
-        // Insert sample properties
-        insertSampleProperties(db);
+        // Note: Properties are now loaded from API, not inserted locally
     }
     
     @Override
@@ -203,81 +201,17 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         db.close();
         return user;
     }
-    
-    // Public method to insert sample properties
+      // Public method to insert sample properties
     public void insertSampleProperties() {
-        SQLiteDatabase db = this.getWritableDatabase();
-        insertSampleProperties(db);
-        db.close();
+        // Properties are now loaded from API in PropertiesFragment
+        // This method is kept for backward compatibility but does nothing
+        Log.d("DatabaseHelper", "Properties are loaded from API, not inserted locally");
     }
 
-    // Insert sample properties
+    // Insert sample properties from API (deprecated - kept for compatibility)
     private void insertSampleProperties(SQLiteDatabase db) {
-        ContentValues values = new ContentValues();
-        
-        // Sample Apartment 1
-        values.put(PROPERTY_TITLE, "Modern Apartment in Ramallah");
-        values.put(PROPERTY_TYPE, "Apartment");
-        values.put(PROPERTY_PRICE, 800);
-        values.put(PROPERTY_LOCATION, "Ramallah, Palestine");
-        values.put(PROPERTY_AREA, "120 m²");
-        values.put(PROPERTY_BEDROOMS, 3);
-        values.put(PROPERTY_BATHROOMS, 2);
-        values.put(PROPERTY_IMAGE_URL, "https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?w=400");
-        values.put(PROPERTY_DESCRIPTION, "Beautiful modern apartment with stunning city views, fully furnished with contemporary amenities.");
-        db.insert(TABLE_PROPERTIES, null, values);
-        values.clear();
-        
-        // Sample Villa 1
-        values.put(PROPERTY_TITLE, "Luxury Villa in Bethlehem");
-        values.put(PROPERTY_TYPE, "Villa");
-        values.put(PROPERTY_PRICE, 1500);
-        values.put(PROPERTY_LOCATION, "Bethlehem, Palestine");
-        values.put(PROPERTY_AREA, "300 m²");
-        values.put(PROPERTY_BEDROOMS, 5);
-        values.put(PROPERTY_BATHROOMS, 4);
-        values.put(PROPERTY_IMAGE_URL, "https://images.unsplash.com/photo-1564013799919-ab600027ffc6?w=400");
-        values.put(PROPERTY_DESCRIPTION, "Spacious luxury villa with private garden, perfect for families seeking comfort and elegance.");
-        db.insert(TABLE_PROPERTIES, null, values);
-        values.clear();
-        
-        // Sample Land 1
-        values.put(PROPERTY_TITLE, "Investment Land in Nablus");
-        values.put(PROPERTY_TYPE, "Land");
-        values.put(PROPERTY_PRICE, 50000);
-        values.put(PROPERTY_LOCATION, "Nablus, Palestine");
-        values.put(PROPERTY_AREA, "1000 m²");
-        values.put(PROPERTY_BEDROOMS, 0);
-        values.put(PROPERTY_BATHROOMS, 0);
-        values.put(PROPERTY_IMAGE_URL, "https://images.unsplash.com/photo-1500382017468-9049fed747ef?w=400");
-        values.put(PROPERTY_DESCRIPTION, "Prime location land perfect for development, excellent investment opportunity.");
-        db.insert(TABLE_PROPERTIES, null, values);
-        values.clear();
-        
-        // Additional properties for variety
-        values.put(PROPERTY_TITLE, "Cozy Apartment in Jerusalem");
-        values.put(PROPERTY_TYPE, "Apartment");
-        values.put(PROPERTY_PRICE, 950);
-        values.put(PROPERTY_LOCATION, "Jerusalem, Palestine");
-        values.put(PROPERTY_AREA, "85 m²");
-        values.put(PROPERTY_BEDROOMS, 2);
-        values.put(PROPERTY_BATHROOMS, 1);
-        values.put(PROPERTY_IMAGE_URL, "https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?w=400");
-        values.put(PROPERTY_DESCRIPTION, "Charming apartment in the heart of the old city with historical significance.");
-        db.insert(TABLE_PROPERTIES, null, values);
-        values.clear();
-        
-        values.put(PROPERTY_TITLE, "Family Villa in Hebron");
-        values.put(PROPERTY_TYPE, "Villa");
-        values.put(PROPERTY_PRICE, 1200);
-        values.put(PROPERTY_LOCATION, "Hebron, Palestine");
-        values.put(PROPERTY_AREA, "250 m²");
-        values.put(PROPERTY_BEDROOMS, 4);
-        values.put(PROPERTY_BATHROOMS, 3);
-        values.put(PROPERTY_IMAGE_URL, "https://images.unsplash.com/photo-1613977257363-707ba9348227?w=400");
-        values.put(PROPERTY_DESCRIPTION, "Traditional style villa with modern amenities, perfect for large families.");
-        db.insert(TABLE_PROPERTIES, null, values);
-        values.clear();
+        // No longer inserting static data - properties come from API
+        Log.d("DatabaseHelper", "Static property insertion removed - using API data");
     }
     
     // Properties CRUD Operations
