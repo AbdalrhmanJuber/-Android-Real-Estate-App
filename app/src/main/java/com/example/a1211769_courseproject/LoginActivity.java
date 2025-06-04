@@ -118,9 +118,8 @@ public class LoginActivity extends AppCompatActivity {
             }
             editor.apply();
               Toast.makeText(this, "Login successful!", Toast.LENGTH_SHORT).show();
-            
-            // Navigate to main activity
-            Intent intent = new Intent(LoginActivity.this, MainActivity.class);
+              // Navigate to home activity
+            Intent intent = new Intent(LoginActivity.this, HomeActivity.class);
             intent.putExtra("userEmail", email);
             startActivity(intent);
             finish();

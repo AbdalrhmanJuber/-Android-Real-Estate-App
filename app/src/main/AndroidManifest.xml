@@ -29,9 +29,13 @@
             android:name=".LoginActivity"
             android:exported="false"
             android:theme="@style/Theme._1211769_CourseProject">
+        </activity>        <activity
+            android:name=".RegisterActivity"
+            android:exported="false"
+            android:theme="@style/Theme._1211769_CourseProject">
         </activity>
         <activity
-            android:name=".RegisterActivity"
+            android:name=".HomeActivity"
             android:exported="false"
             android:theme="@style/Theme._1211769_CourseProject">
         </activity>

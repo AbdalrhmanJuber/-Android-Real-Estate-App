@@ -1,3 +1,46 @@
 <resources>
     <string name="app_name">1211769_CourseProject</string>
+    
+    <!-- Navigation Drawer -->
+    <string name="navigation_drawer_open">Open navigation drawer</string>
+    <string name="navigation_drawer_close">Close navigation drawer</string>
+    
+    <!-- Navigation Menu Items -->
+    <string name="nav_home">Home</string>
+    <string name="nav_properties">Properties Menu</string>
+    <string name="nav_reservations">Your Reservations</string>
+    <string name="nav_favorites">Your Favorites</string>
+    <string name="nav_featured">Featured Properties</string>
+    <string name="nav_profile">Profile Management</string>
+    <string name="nav_contact">Contact Us</string>
+    <string name="nav_logout">Logout</string>
+    <string name="nav_other">Other</string>
+    
+    <!-- Welcome Texts -->
+    <string name="welcome_message">Welcome to Property Finder</string>
+    <string name="user_email_label">User Email:</string>
+    
+    <!-- About Us Content -->
+    <string name="about_us_title">About Property Finder</string>
+    <string name="about_us_content">Property Finder is your premier destination for discovering the perfect rental properties. We specialize in connecting travelers and tenants with exceptional accommodations across Palestine, Jordan, and Lebanon.\n\nOur mission is to make property searching and booking as seamless as possible, offering you a curated selection of verified properties with detailed information, photos, and competitive pricing.\n\nWhether you\'re looking for a vacation rental, temporary accommodation, or a long-term lease, Property Finder has you covered with our extensive network of quality properties.</string>
+    
+    <!-- Contact Information -->
+    <string name="contact_phone">+970-XXX-XXXX</string>
+    <string name="contact_email">info@propertyfinder.com</string>
+    <string name="contact_address">123 Property Street, Ramallah, Palestine</string>
+    
+    <!-- Common Actions -->
+    <string name="action_call">Call</string>
+    <string name="action_email">Email</string>
+    <string name="action_map">View on Map</string>
+    
+    <!-- Empty States -->
+    <string name="no_properties">No properties available</string>
+    <string name="no_reservations">No reservations found</string>
+    <string name="no_favorites">No favorites added yet</string>
+    
+    <!-- Profile -->
+    <string name="profile_title">Profile Management</string>
+    <string name="edit_profile">Edit Profile</string>
+    <string name="change_password">Change Password</string>
 </resources>

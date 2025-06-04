@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    tools:showIn="navigation_view">    <group android:checkableBehavior="single">
+        <item
+            android:id="@+id/nav_home"
+            android:icon="@drawable/ic_home"
+            android:title="@string/nav_home" />
+        
+        <item
+            android:id="@+id/nav_properties"
+            android:icon="@drawable/ic_properties"
+            android:title="@string/nav_properties" />
+        
+        <item
+            android:id="@+id/nav_reservations"
+            android:icon="@drawable/ic_reservations"
+            android:title="@string/nav_reservations" />
+        
+        <item
+            android:id="@+id/nav_favorites"
+            android:icon="@drawable/ic_favorites"
+            android:title="@string/nav_favorites" />
+        
+        <item
+            android:id="@+id/nav_featured"
+            android:icon="@drawable/ic_featured"
+            android:title="@string/nav_featured" />
+        
+        <item
+            android:id="@+id/nav_profile"
+            android:icon="@drawable/ic_person"
+            android:title="@string/nav_profile" />
+    </group>
+
+    <item android:title="@string/nav_other">
+        <menu>
+            <item
+                android:id="@+id/nav_contact"
+                android:icon="@drawable/ic_contact"
+                android:title="@string/nav_contact" />
+            
+            <item
+                android:id="@+id/nav_logout"
+                android:icon="@drawable/ic_logout"
+                android:title="@string/nav_logout" />
+        </menu>
+    </item>
+
+</menu>
