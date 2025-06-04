@@ -43,4 +43,40 @@
     <string name="profile_title">Profile Management</string>
     <string name="edit_profile">Edit Profile</string>
     <string name="change_password">Change Password</string>
+    
+    <!-- Properties Menu -->
+    <string name="properties_menu">Properties Menu</string>
+    <string name="properties_subtitle">Browse and search through our extensive collection of properties. Find your perfect home or investment opportunity.</string>
+    <string name="search_properties">Search properties...</string>
+    <string name="filter_type">Type</string>
+    <string name="filter_location">Location</string>
+    <string name="filter_price">Price</string>
+    <string name="no_properties_found">No properties found</string>
+    <string name="try_different_search">Try adjusting your search filters</string>
+    
+    <!-- Property Details -->
+    <string name="view_details">View Details</string>
+    <string name="reserve_property">Reserve Property</string>
+    <string name="add_to_favorites">Add to favorites</string>
+    <string name="specifications">Specifications</string>
+    <string name="area">Area</string>
+    <string name="bedrooms">Bedrooms</string>
+    <string name="bathrooms">Bathrooms</string>
+    <string name="description">Description</string>
+    <string name="back">Back</string>
+    
+    <!-- Reservation -->
+    <string name="reservation_subtitle">Schedule a visit to view this property</string>
+    <string name="property_details">Property Details</string>
+    <string name="reservation_details">Reservation Details</string>
+    <string name="preferred_visit_date">Preferred Visit Date</string>
+    <string name="select_date">Select date</string>
+    <string name="preferred_visit_time">Preferred Visit Time</string>
+    <string name="enter_time">Enter time (e.g., 10:00 AM)</string>
+    <string name="contact_phone_label">Contact Phone</string>
+    <string name="enter_phone_number">Enter your phone number</string>
+    <string name="special_requests">Special Requests (Optional)</string>
+    <string name="enter_special_requests">Any special requests or questions?</string>
+    <string name="cancel">Cancel</string>
+    <string name="confirm_reservation">Confirm Reservation</string>
 </resources>

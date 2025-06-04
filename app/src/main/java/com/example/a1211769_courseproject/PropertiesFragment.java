@@ -1,17 +1,45 @@
 package com.example.a1211769_courseproject;
 
+import android.app.AlertDialog;
+import android.content.SharedPreferences;
 import android.os.Bundle;
+import android.text.Editable;
+import android.text.TextWatcher;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.animation.Animation;
 import android.view.animation.AnimationUtils;
+import android.widget.Button;
+import android.widget.EditText;
+import android.widget.LinearLayout;
+import android.widget.SeekBar;
+import android.widget.TextView;
+import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
+import androidx.fragment.app.FragmentTransaction;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
+import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 
-public class PropertiesFragment extends Fragment {
+import java.util.ArrayList;
+import java.util.List;
+
+public class PropertiesFragment extends Fragment implements PropertyAdapter.OnPropertyClickListener {
+
+    private RecyclerView recyclerProperties;
+    private PropertyAdapter adapter;
+    private SwipeRefreshLayout swipeRefresh;
+    private LinearLayout layoutEmpty;
+    private EditText editSearch;
+    private Button btnFilterType, btnFilterLocation, btnFilterPrice;
+    
+    private DatabaseHelper databaseHelper;
+    private List<Property> allProperties;
+    private String currentUserEmail;
 
     @Nullable
     @Override
@@ -22,6 +50,230 @@ public class PropertiesFragment extends Fragment {
         Animation slideIn = AnimationUtils.loadAnimation(getContext(), R.anim.slide_in_right);
         view.startAnimation(slideIn);
         
+        initializeViews(view);
+        setupRecyclerView();
+        setupSearchAndFilters();
+        loadProperties();
+        
         return view;
+    }
+
+    private void initializeViews(View view) {
+        recyclerProperties = view.findViewById(R.id.recycler_properties);
+        swipeRefresh = view.findViewById(R.id.swipe_refresh);
+        layoutEmpty = view.findViewById(R.id.layout_empty);
+        editSearch = view.findViewById(R.id.edit_search);
+        btnFilterType = view.findViewById(R.id.btn_filter_type);
+        btnFilterLocation = view.findViewById(R.id.btn_filter_location);
+        btnFilterPrice = view.findViewById(R.id.btn_filter_price);
+        
+        databaseHelper = new DatabaseHelper(getContext());
+        
+        // Get current user email from SharedPreferences
+        SharedPreferences prefs = getActivity().getSharedPreferences("UserPrefs", getContext().MODE_PRIVATE);
+        currentUserEmail = prefs.getString("email", "");
+    }
+
+    private void setupRecyclerView() {
+        allProperties = new ArrayList<>();
+        adapter = new PropertyAdapter(getContext(), allProperties, currentUserEmail);
+        adapter.setOnPropertyClickListener(this);
+        
+        recyclerProperties.setLayoutManager(new LinearLayoutManager(getContext()));
+        recyclerProperties.setAdapter(adapter);
+        
+        // Setup pull-to-refresh
+        swipeRefresh.setOnRefreshListener(this::loadProperties);
+        swipeRefresh.setColorSchemeResources(R.color.primary_color);
+    }
+
+    private void setupSearchAndFilters() {
+        // Search functionality
+        editSearch.addTextChangedListener(new TextWatcher() {
+            @Override
+            public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
+
+            @Override
+            public void onTextChanged(CharSequence s, int start, int before, int count) {
+                adapter.filter(s.toString());
+                updateEmptyState();
+            }
+
+            @Override
+            public void afterTextChanged(Editable s) {}
+        });
+
+        // Filter buttons
+        btnFilterType.setOnClickListener(v -> showTypeFilterDialog());
+        btnFilterLocation.setOnClickListener(v -> showLocationFilterDialog());
+        btnFilterPrice.setOnClickListener(v -> showPriceFilterDialog());
+    }
+
+    private void loadProperties() {
+        swipeRefresh.setRefreshing(true);
+        
+        // Load properties from database
+        allProperties.clear();
+        allProperties.addAll(databaseHelper.getAllProperties());
+        
+        adapter.updateProperties(allProperties);
+        updateEmptyState();
+        
+        swipeRefresh.setRefreshing(false);
+        
+        if (allProperties.isEmpty()) {
+            Toast.makeText(getContext(), "No properties found. Loading sample data...", Toast.LENGTH_SHORT).show();
+            // If no properties, insert sample data
+            databaseHelper.insertSampleProperties();
+            loadProperties();
+        }
+    }
+
+    private void updateEmptyState() {
+        if (adapter.getItemCount() == 0) {
+            recyclerProperties.setVisibility(View.GONE);
+            layoutEmpty.setVisibility(View.VISIBLE);
+        } else {
+            recyclerProperties.setVisibility(View.VISIBLE);
+            layoutEmpty.setVisibility(View.GONE);
+        }
+    }
+
+    private void showTypeFilterDialog() {
+        String[] types = {"All", "Apartment", "Villa", "House", "Commercial", "Land"};
+        
+        AlertDialog.Builder builder = new AlertDialog.Builder(getContext());
+        builder.setTitle("Filter by Property Type")
+                .setItems(types, (dialog, which) -> {
+                    String selectedType = types[which];
+                    adapter.filterByType(selectedType);
+                    updateEmptyState();
+                    btnFilterType.setText("Type: " + selectedType);
+                    Toast.makeText(getContext(), "Filtered by: " + selectedType, Toast.LENGTH_SHORT).show();
+                })
+                .show();
+    }
+
+    private void showLocationFilterDialog() {
+        String[] locations = {"All", "Ramallah", "Jerusalem", "Bethlehem", "Nablus", "Hebron", "Gaza", "Jenin"};
+        
+        AlertDialog.Builder builder = new AlertDialog.Builder(getContext());
+        builder.setTitle("Filter by Location")
+                .setItems(locations, (dialog, which) -> {
+                    String selectedLocation = locations[which];
+                    adapter.filterByLocation(selectedLocation);
+                    updateEmptyState();
+                    btnFilterLocation.setText("Location: " + selectedLocation);
+                    Toast.makeText(getContext(), "Filtered by: " + selectedLocation, Toast.LENGTH_SHORT).show();
+                })
+                .show();
+    }
+
+    private void showPriceFilterDialog() {
+        View dialogView = LayoutInflater.from(getContext()).inflate(R.layout.dialog_price_filter, null);
+        
+        SeekBar seekBarMin = dialogView.findViewById(R.id.seekbar_min_price);
+        SeekBar seekBarMax = dialogView.findViewById(R.id.seekbar_max_price);
+        TextView txtMinPrice = dialogView.findViewById(R.id.txt_min_price);
+        TextView txtMaxPrice = dialogView.findViewById(R.id.txt_max_price);
+        
+        // Set max values (in thousands)
+        seekBarMin.setMax(1000); // $1M max
+        seekBarMax.setMax(1000);
+        seekBarMin.setProgress(0); // $0 min
+        seekBarMax.setProgress(1000); // $1M max
+        
+        seekBarMin.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
+            @Override
+            public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
+                txtMinPrice.setText("Min: $" + (progress * 1000));
+                if (progress >= seekBarMax.getProgress()) {
+                    seekBarMax.setProgress(progress + 1);
+                }
+            }
+            @Override
+            public void onStartTrackingTouch(SeekBar seekBar) {}
+            @Override
+            public void onStopTrackingTouch(SeekBar seekBar) {}
+        });
+        
+        seekBarMax.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
+            @Override
+            public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
+                txtMaxPrice.setText("Max: $" + (progress * 1000));
+                if (progress <= seekBarMin.getProgress()) {
+                    seekBarMin.setProgress(progress - 1);
+                }
+            }
+            @Override
+            public void onStartTrackingTouch(SeekBar seekBar) {}
+            @Override
+            public void onStopTrackingTouch(SeekBar seekBar) {}
+        });
+        
+        // Initialize text
+        txtMinPrice.setText("Min: $0");
+        txtMaxPrice.setText("Max: $1,000,000");
+        
+        AlertDialog.Builder builder = new AlertDialog.Builder(getContext());
+        builder.setTitle("Filter by Price Range")
+                .setView(dialogView)
+                .setPositiveButton("Apply", (dialog, which) -> {
+                    double minPrice = seekBarMin.getProgress() * 1000;
+                    double maxPrice = seekBarMax.getProgress() * 1000;
+                    adapter.filterByPriceRange(minPrice, maxPrice);
+                    updateEmptyState();
+                    btnFilterPrice.setText("Price: $" + (int)(minPrice/1000) + "K - $" + (int)(maxPrice/1000) + "K");
+                    Toast.makeText(getContext(), "Price filter applied", Toast.LENGTH_SHORT).show();
+                })
+                .setNegativeButton("Cancel", null)
+                .setNeutralButton("Reset", (dialog, which) -> {
+                    adapter.filterByPriceRange(0, Double.MAX_VALUE);
+                    updateEmptyState();
+                    btnFilterPrice.setText("Filter Price");
+                    Toast.makeText(getContext(), "Price filter reset", Toast.LENGTH_SHORT).show();
+                })
+                .show();
+    }
+
+    @Override
+    public void onPropertyClick(Property property) {
+        // Open property details fragment
+        PropertyDetailsFragment detailsFragment = PropertyDetailsFragment.newInstance(property);
+        
+        FragmentTransaction transaction = getParentFragmentManager().beginTransaction();
+        transaction.setCustomAnimations(
+            R.anim.fade_in,
+            R.anim.fade_out,
+            R.anim.fade_in,
+            R.anim.fade_out
+        );
+        transaction.replace(R.id.fragment_container, detailsFragment);
+        transaction.addToBackStack(null);
+        transaction.commit();
+    }
+
+    @Override
+    public void onReserveClick(Property property) {
+        // Open reservation details fragment
+        ReservationDetailsFragment reservationFragment = ReservationDetailsFragment.newInstance(property);
+        
+        FragmentTransaction transaction = getParentFragmentManager().beginTransaction();
+        transaction.setCustomAnimations(
+            R.anim.slide_in_up,
+            R.anim.slide_out_down,
+            R.anim.slide_in_up,
+            R.anim.slide_out_down
+        );
+        transaction.replace(R.id.fragment_container, reservationFragment);
+        transaction.addToBackStack(null);
+        transaction.commit();
+    }
+
+    @Override
+    public void onResume() {
+        super.onResume();
+        // Refresh properties when returning to fragment
+        loadProperties();
     }
 }

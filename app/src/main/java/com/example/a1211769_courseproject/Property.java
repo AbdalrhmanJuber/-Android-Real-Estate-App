@@ -1,7 +1,9 @@
 package com.example.a1211769_courseproject;
 
+import java.io.Serializable;
+
 // Property.java
-public class Property {
+public class Property implements Serializable {
     private int id;
     private String title;
     private String type;          // “Apartment” | “Villa” | “Land”
