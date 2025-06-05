@@ -8,6 +8,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.view.animation.Animation;
 import android.view.animation.AnimationUtils;
+import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -21,11 +22,10 @@ import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 import java.util.ArrayList;
 import java.util.List;
 
-public class ReservationsFragment extends Fragment {
-
-    private RecyclerView reservationsRecyclerView;
+public class ReservationsFragment extends Fragment {    private RecyclerView reservationsRecyclerView;
     private SwipeRefreshLayout swipeRefreshLayout;
     private TextView emptyStateText;
+    private ImageView emptyStateImage;
     private ReservationAdapter reservationAdapter;
     private DatabaseHelper databaseHelper;
     private List<Reservation> reservationsList;
@@ -45,12 +45,11 @@ public class ReservationsFragment extends Fragment {
         view.startAnimation(slideIn);
         
         return view;
-    }
-
-    private void initializeViews(View view) {
+    }    private void initializeViews(View view) {
         reservationsRecyclerView = view.findViewById(R.id.reservations_recycler_view);
         swipeRefreshLayout = view.findViewById(R.id.swipe_refresh_layout);
         emptyStateText = view.findViewById(R.id.empty_state_text);
+        emptyStateImage = view.findViewById(R.id.empty_state_image);
         
         databaseHelper = new DatabaseHelper(getContext());
         reservationsList = new ArrayList<>();
@@ -110,14 +109,13 @@ public class ReservationsFragment extends Fragment {
                 swipeRefreshLayout.setRefreshing(false);
             }
         }
-    }
-
-    private void showReservations(List<Reservation> reservations) {
+    }    private void showReservations(List<Reservation> reservations) {
         reservationsList.clear();
         reservationsList.addAll(reservations);
         
         reservationsRecyclerView.setVisibility(View.VISIBLE);
         emptyStateText.setVisibility(View.GONE);
+        emptyStateImage.setVisibility(View.GONE);
         
         reservationAdapter.updateReservations(reservationsList);
         
@@ -130,11 +128,10 @@ public class ReservationsFragment extends Fragment {
                 }
             }, i * 100);
         }
-    }
-
-    private void showEmptyState(String message) {
+    }    private void showEmptyState(String message) {
         reservationsRecyclerView.setVisibility(View.GONE);
         emptyStateText.setVisibility(View.VISIBLE);
+        emptyStateImage.setVisibility(View.VISIBLE);
         emptyStateText.setText(message);
         
         // Apply fade-in animation to empty state
