@@ -105,8 +105,7 @@ public class LoginActivity extends AppCompatActivity {
         // Animate button
         Animation bounceAnimation = AnimationUtils.loadAnimation(this, R.anim.bounce);
         buttonLogin.startAnimation(bounceAnimation);
-        
-        if (databaseHelper.checkUser(email, password)) {
+          if (databaseHelper.checkUser(email, password)) {
             // Save email if remember me is checked
             SharedPreferences.Editor editor = sharedPreferences.edit();
             if (checkBoxRememberMe.isChecked()) {
@@ -117,8 +116,15 @@ public class LoginActivity extends AppCompatActivity {
                 editor.putBoolean(KEY_REMEMBER, false);
             }
             editor.apply();
-              Toast.makeText(this, "Login successful!", Toast.LENGTH_SHORT).show();
-              // Navigate to home activity
+            
+            // Also save user email in UserPrefs for reservation system
+            SharedPreferences userPrefs = getSharedPreferences("UserPrefs", MODE_PRIVATE);
+            SharedPreferences.Editor userEditor = userPrefs.edit();
+            userEditor.putString("email", email);
+            userEditor.apply();
+            
+            Toast.makeText(this, "Login successful!", Toast.LENGTH_SHORT).show();
+            // Navigate to home activity
             Intent intent = new Intent(LoginActivity.this, HomeActivity.class);
             intent.putExtra("userEmail", email);
             startActivity(intent);

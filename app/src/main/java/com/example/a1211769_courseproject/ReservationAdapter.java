@@ -52,18 +52,16 @@ public class ReservationAdapter extends RecyclerView.Adapter<ReservationAdapter.
         
         // Apply fade-in animation
         Animation fadeIn = AnimationUtils.loadAnimation(context, android.R.anim.fade_in);
-        holder.itemView.startAnimation(fadeIn);
-          // Bind property data
+        holder.itemView.startAnimation(fadeIn);        // Bind property data
         holder.propertyTitle.setText(reservation.getPropertyTitle());
         holder.propertyLocation.setText(reservation.getPropertyLocation());
-        holder.propertyPrice.setText(String.format(Locale.getDefault(), "$%.0f/night", reservation.getPropertyPrice()));
+        holder.propertyPrice.setText(String.format(Locale.getDefault(), "$%d/night", reservation.getPropertyPrice()));
           // Load property image - consistent with PropertyAdapter approach
         holder.propertyImage.setImageResource(R.drawable.property_placeholder);
-          // Format and display dates
-        SimpleDateFormat dateFormat = new SimpleDateFormat("MMM dd, yyyy", Locale.getDefault());
-        holder.reservationDate.setText("Reserved: " + dateFormat.format(reservation.getReservationDate()));
-        holder.checkInDate.setText("Check-in: " + dateFormat.format(reservation.getCheckInDate()));
-        holder.checkOutDate.setText("Check-out: " + dateFormat.format(reservation.getCheckOutDate()));
+          // Display dates directly as stored (they are already formatted strings)
+        holder.reservationDate.setText("Reserved: " + reservation.getReservationDate());
+        holder.checkInDate.setText("Visit Time: " + reservation.getVisitTime()); // Visit time is stored in check_in
+        holder.checkOutDate.setText("Contact: " + reservation.getContactPhone()); // Contact phone is stored in check_out
         
         // Set reservation status
         String status = reservation.getStatus();

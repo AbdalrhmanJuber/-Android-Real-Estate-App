@@ -146,14 +146,18 @@ public class HomeActivity extends AppCompatActivity implements NavigationView.On
         );
         fragmentTransaction.replace(R.id.fragment_container, fragment);
         fragmentTransaction.commit();
-    }
-
-    private void logout() {
+    }    private void logout() {
         // Clear SharedPreferences
         SharedPreferences prefs = getSharedPreferences("LoginPrefs", MODE_PRIVATE);
         SharedPreferences.Editor editor = prefs.edit();
         editor.putBoolean("remember_me", false);
         editor.apply();
+
+        // Also clear UserPrefs used by reservation system
+        SharedPreferences userPrefs = getSharedPreferences("UserPrefs", MODE_PRIVATE);
+        SharedPreferences.Editor userEditor = userPrefs.edit();
+        userEditor.clear();
+        userEditor.apply();
 
         Toast.makeText(this, "Logged out successfully", Toast.LENGTH_SHORT).show();
 

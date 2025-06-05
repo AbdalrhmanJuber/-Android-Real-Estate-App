@@ -11,7 +11,7 @@ import java.util.List;
 
 public class DatabaseHelper extends SQLiteOpenHelper {
     private static final String DATABASE_NAME = "CourseProject.db";
-    private static final int DATABASE_VERSION = 2; // Incremented for new tables
+    private static final int DATABASE_VERSION = 3; // Incremented for reservation table changes
     
     // Table names
     private static final String TABLE_USERS = "users";
@@ -98,8 +98,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
                 + FAVORITE_DATE_ADDED + " TEXT,"
                 + "FOREIGN KEY(" + FAVORITE_USER_EMAIL + ") REFERENCES " + TABLE_USERS + "(" + KEY_EMAIL + "),"
                 + "FOREIGN KEY(" + FAVORITE_PROPERTY_ID + ") REFERENCES " + TABLE_PROPERTIES + "(" + PROPERTY_ID + ")" + ")";
-        db.execSQL(CREATE_FAVORITES_TABLE);
-          // Create reservations table
+        db.execSQL(CREATE_FAVORITES_TABLE);        // Create reservations table with property details stored directly
         String CREATE_RESERVATIONS_TABLE = "CREATE TABLE " + TABLE_RESERVATIONS + "("
                 + RESERVATION_ID + " INTEGER PRIMARY KEY AUTOINCREMENT,"
                 + RESERVATION_USER_EMAIL + " TEXT,"
@@ -109,8 +108,12 @@ public class DatabaseHelper extends SQLiteOpenHelper {
                 + RESERVATION_CHECK_OUT + " TEXT,"
                 + RESERVATION_STATUS + " TEXT,"
                 + RESERVATION_NOTES + " TEXT,"
-                + "FOREIGN KEY(" + RESERVATION_USER_EMAIL + ") REFERENCES " + TABLE_USERS + "(" + KEY_EMAIL + "),"
-                + "FOREIGN KEY(" + RESERVATION_PROPERTY_ID + ") REFERENCES " + TABLE_PROPERTIES + "(" + PROPERTY_ID + ")" + ")";
+                + "property_title TEXT,"
+                + "property_location TEXT,"
+                + "property_price INTEGER,"
+                + "property_type TEXT,"
+                + "property_image_url TEXT,"
+                + "FOREIGN KEY(" + RESERVATION_USER_EMAIL + ") REFERENCES " + TABLE_USERS + "(" + KEY_EMAIL + ")" + ")";
         db.execSQL(CREATE_RESERVATIONS_TABLE);
         
         // Note: Properties are now loaded from API, not inserted locally
@@ -404,37 +407,38 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         db.close();
         return properties;
     }
-    
-    // Reservations CRUD Operations
-    public long insertReservation(String userEmail, int propertyId, String reservationDate, 
+      // Reservations CRUD Operations
+    public long insertReservation(String userEmail, Property property, String reservationDate, 
                                 String visitTime, String contactPhone, String specialRequests) {
         SQLiteDatabase db = this.getWritableDatabase();
         ContentValues values = new ContentValues();
         
         values.put(RESERVATION_USER_EMAIL, userEmail);
-        values.put(RESERVATION_PROPERTY_ID, propertyId);
+        values.put(RESERVATION_PROPERTY_ID, property.getId());
         values.put(RESERVATION_DATE, reservationDate);
         values.put(RESERVATION_CHECK_IN, visitTime); // Using check_in for visit time
         values.put(RESERVATION_CHECK_OUT, contactPhone); // Using check_out for contact phone
         values.put(RESERVATION_STATUS, "Pending");
         values.put(RESERVATION_NOTES, specialRequests);
         
+        // Store property details directly in the reservation
+        values.put("property_title", property.getTitle());
+        values.put("property_location", property.getLocation());
+        values.put("property_price", property.getPrice());
+        values.put("property_type", property.getType());
+        values.put("property_image_url", property.getImageUrl());
+        
         long result = db.insert(TABLE_RESERVATIONS, null, values);
         db.close();
         return result;
-    }
-
-    public List<Reservation> getUserReservations(String userEmail) {
+    }    public List<Reservation> getUserReservations(String userEmail) {
         List<Reservation> reservations = new ArrayList<>();
         SQLiteDatabase db = this.getReadableDatabase();
         
-        // Join reservations with properties to get property details
-        String query = "SELECT r.*, p." + PROPERTY_TITLE + ", p." + PROPERTY_LOCATION + 
-                      ", p." + PROPERTY_PRICE + ", p." + PROPERTY_TYPE + ", p." + PROPERTY_IMAGE_URL +
-                      " FROM " + TABLE_RESERVATIONS + " r " +
-                      "LEFT JOIN " + TABLE_PROPERTIES + " p ON r." + RESERVATION_PROPERTY_ID + " = p." + PROPERTY_ID +
-                      " WHERE r." + RESERVATION_USER_EMAIL + " = ?" +
-                      " ORDER BY r." + RESERVATION_DATE + " DESC";
+        // Query reservations table directly with property details stored in it
+        String query = "SELECT * FROM " + TABLE_RESERVATIONS + 
+                      " WHERE " + RESERVATION_USER_EMAIL + " = ?" +
+                      " ORDER BY " + RESERVATION_DATE + " DESC";
         
         Cursor cursor = db.rawQuery(query, new String[]{userEmail});
         
@@ -450,14 +454,14 @@ public class DatabaseHelper extends SQLiteOpenHelper {
                 reservation.setStatus(cursor.getString(cursor.getColumnIndexOrThrow(RESERVATION_STATUS)));
                 reservation.setNotes(cursor.getString(cursor.getColumnIndexOrThrow(RESERVATION_NOTES)));
                 
-                // Get property details if available
-                int titleIndex = cursor.getColumnIndex(PROPERTY_TITLE);
+                // Get property details from the reservation record itself
+                int titleIndex = cursor.getColumnIndex("property_title");
                 if (titleIndex != -1 && !cursor.isNull(titleIndex)) {
                     reservation.setPropertyTitle(cursor.getString(titleIndex));
-                    reservation.setPropertyLocation(cursor.getString(cursor.getColumnIndexOrThrow(PROPERTY_LOCATION)));
-                    reservation.setPropertyPrice(cursor.getInt(cursor.getColumnIndexOrThrow(PROPERTY_PRICE)));
-                    reservation.setPropertyType(cursor.getString(cursor.getColumnIndexOrThrow(PROPERTY_TYPE)));
-                    reservation.setPropertyImageUrl(cursor.getString(cursor.getColumnIndexOrThrow(PROPERTY_IMAGE_URL)));
+                    reservation.setPropertyLocation(cursor.getString(cursor.getColumnIndexOrThrow("property_location")));
+                    reservation.setPropertyPrice(cursor.getInt(cursor.getColumnIndexOrThrow("property_price")));
+                    reservation.setPropertyType(cursor.getString(cursor.getColumnIndexOrThrow("property_type")));
+                    reservation.setPropertyImageUrl(cursor.getString(cursor.getColumnIndexOrThrow("property_image_url")));
                 }
                 
                 reservations.add(reservation);
