@@ -404,4 +404,105 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         db.close();
         return properties;
     }
+    
+    // Reservations CRUD Operations
+    public long insertReservation(String userEmail, int propertyId, String reservationDate, 
+                                String visitTime, String contactPhone, String specialRequests) {
+        SQLiteDatabase db = this.getWritableDatabase();
+        ContentValues values = new ContentValues();
+        
+        values.put(RESERVATION_USER_EMAIL, userEmail);
+        values.put(RESERVATION_PROPERTY_ID, propertyId);
+        values.put(RESERVATION_DATE, reservationDate);
+        values.put(RESERVATION_CHECK_IN, visitTime); // Using check_in for visit time
+        values.put(RESERVATION_CHECK_OUT, contactPhone); // Using check_out for contact phone
+        values.put(RESERVATION_STATUS, "Pending");
+        values.put(RESERVATION_NOTES, specialRequests);
+        
+        long result = db.insert(TABLE_RESERVATIONS, null, values);
+        db.close();
+        return result;
+    }
+
+    public List<Reservation> getUserReservations(String userEmail) {
+        List<Reservation> reservations = new ArrayList<>();
+        SQLiteDatabase db = this.getReadableDatabase();
+        
+        // Join reservations with properties to get property details
+        String query = "SELECT r.*, p." + PROPERTY_TITLE + ", p." + PROPERTY_LOCATION + 
+                      ", p." + PROPERTY_PRICE + ", p." + PROPERTY_TYPE + ", p." + PROPERTY_IMAGE_URL +
+                      " FROM " + TABLE_RESERVATIONS + " r " +
+                      "LEFT JOIN " + TABLE_PROPERTIES + " p ON r." + RESERVATION_PROPERTY_ID + " = p." + PROPERTY_ID +
+                      " WHERE r." + RESERVATION_USER_EMAIL + " = ?" +
+                      " ORDER BY r." + RESERVATION_DATE + " DESC";
+        
+        Cursor cursor = db.rawQuery(query, new String[]{userEmail});
+        
+        if (cursor.moveToFirst()) {
+            do {
+                Reservation reservation = new Reservation();
+                reservation.setReservationId(cursor.getInt(cursor.getColumnIndexOrThrow(RESERVATION_ID)));
+                reservation.setUserEmail(cursor.getString(cursor.getColumnIndexOrThrow(RESERVATION_USER_EMAIL)));
+                reservation.setPropertyId(cursor.getInt(cursor.getColumnIndexOrThrow(RESERVATION_PROPERTY_ID)));
+                reservation.setReservationDate(cursor.getString(cursor.getColumnIndexOrThrow(RESERVATION_DATE)));
+                reservation.setVisitTime(cursor.getString(cursor.getColumnIndexOrThrow(RESERVATION_CHECK_IN))); // Visit time stored in check_in
+                reservation.setContactPhone(cursor.getString(cursor.getColumnIndexOrThrow(RESERVATION_CHECK_OUT))); // Contact phone stored in check_out
+                reservation.setStatus(cursor.getString(cursor.getColumnIndexOrThrow(RESERVATION_STATUS)));
+                reservation.setNotes(cursor.getString(cursor.getColumnIndexOrThrow(RESERVATION_NOTES)));
+                
+                // Get property details if available
+                int titleIndex = cursor.getColumnIndex(PROPERTY_TITLE);
+                if (titleIndex != -1 && !cursor.isNull(titleIndex)) {
+                    reservation.setPropertyTitle(cursor.getString(titleIndex));
+                    reservation.setPropertyLocation(cursor.getString(cursor.getColumnIndexOrThrow(PROPERTY_LOCATION)));
+                    reservation.setPropertyPrice(cursor.getInt(cursor.getColumnIndexOrThrow(PROPERTY_PRICE)));
+                    reservation.setPropertyType(cursor.getString(cursor.getColumnIndexOrThrow(PROPERTY_TYPE)));
+                    reservation.setPropertyImageUrl(cursor.getString(cursor.getColumnIndexOrThrow(PROPERTY_IMAGE_URL)));
+                }
+                
+                reservations.add(reservation);
+            } while (cursor.moveToNext());
+        }
+        
+        cursor.close();
+        db.close();
+        return reservations;
+    }
+
+    public boolean updateReservationStatus(int reservationId, String status) {
+        SQLiteDatabase db = this.getWritableDatabase();
+        ContentValues values = new ContentValues();
+        values.put(RESERVATION_STATUS, status);
+        
+        String selection = RESERVATION_ID + " = ?";
+        String[] selectionArgs = {String.valueOf(reservationId)};
+        
+        int result = db.update(TABLE_RESERVATIONS, values, selection, selectionArgs);
+        db.close();
+        return result > 0;
+    }
+
+    public boolean deleteReservation(int reservationId) {
+        SQLiteDatabase db = this.getWritableDatabase();
+        
+        String selection = RESERVATION_ID + " = ?";
+        String[] selectionArgs = {String.valueOf(reservationId)};
+        
+        int result = db.delete(TABLE_RESERVATIONS, selection, selectionArgs);
+        db.close();
+        return result > 0;
+    }
+
+    public int getReservationCount(String userEmail) {
+        SQLiteDatabase db = this.getReadableDatabase();
+        
+        String selection = RESERVATION_USER_EMAIL + " = ?";
+        String[] selectionArgs = {userEmail};
+        
+        Cursor cursor = db.query(TABLE_RESERVATIONS, null, selection, selectionArgs, null, null, null);
+        int count = cursor.getCount();
+        cursor.close();
+        db.close();
+        return count;
+    }
 }

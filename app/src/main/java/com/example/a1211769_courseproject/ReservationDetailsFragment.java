@@ -170,19 +170,34 @@ public class ReservationDetailsFragment extends Fragment {
             editContactPhone.requestFocus();
             return;
         }
-        
-        // Create reservation (in a real app, this would save to database)
+          // Create reservation and save to database
         String specialRequests = editSpecialRequests.getText().toString().trim();
         
-        // Show confirmation
-        Toast.makeText(getContext(), 
-            "Reservation confirmed!\nProperty: " + property.getTitle() + 
-            "\nDate: " + editReservationDate.getText().toString() + 
-            "\nTime: " + visitTime, 
-            Toast.LENGTH_LONG).show();
+        // Save reservation to database
+        DatabaseHelper databaseHelper = new DatabaseHelper(getContext());
+        long reservationId = databaseHelper.insertReservation(
+            currentUserEmail, 
+            property.getId(), 
+            editReservationDate.getText().toString(),
+            visitTime, 
+            contactPhone, 
+            specialRequests
+        );
         
-        // In a real implementation, you would save this to the database
-        // databaseHelper.insertReservation(currentUserEmail, property.getId(), selectedDate.getTime(), visitTime, contactPhone, specialRequests);
+        if (reservationId != -1) {
+            // Show success confirmation
+            Toast.makeText(getContext(), 
+                "Reservation confirmed!\nProperty: " + property.getTitle() + 
+                "\nDate: " + editReservationDate.getText().toString() + 
+                "\nTime: " + visitTime, 
+                Toast.LENGTH_LONG).show();
+        } else {
+            // Show error message
+            Toast.makeText(getContext(), 
+                "Failed to save reservation. Please try again.", 
+                Toast.LENGTH_SHORT).show();
+            return;
+        }
         
         // Go back to properties list
         if (getParentFragmentManager().getBackStackEntryCount() > 0) {
