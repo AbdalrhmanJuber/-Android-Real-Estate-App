@@ -18,9 +18,7 @@ public class JsonParser {
                 JSONObject c = catArray.getJSONObject(i);
                 int cid = c.getInt("id");
                 String name = c.getString("name");
-            }
-
-            JSONArray propArray = top.getJSONArray("properties");
+            }            JSONArray propArray = top.getJSONArray("properties");
             for (int i = 0; i < propArray.length(); i++) {
                 JSONObject p = propArray.getJSONObject(i);
                 int id        = p.getInt("id");
@@ -34,10 +32,22 @@ public class JsonParser {
                 String image  = p.getString("image_url");
                 String descr  = p.getString("description");
 
+                // Parse optional promotion fields with defaults
+                boolean isPromoted = p.optBoolean("is_promoted", false);
+                boolean hasSpecialOffer = p.optBoolean("has_special_offer", false);
+                String offerType = p.optString("offer_type", "");
+                int originalPrice = p.optInt("original_price", price);
+                int discountPercentage = p.optInt("discount_percentage", 0);
+                String offerDescription = p.optString("offer_description", "");
+                long offerExpiryDate = p.optLong("offer_expiry_date", 0);
+
                 Property prop = new Property(
                         id, title, type, price,
                         loc, area, beds, baths,
-                        image, descr
+                        image, descr,
+                        isPromoted, hasSpecialOffer, offerType,
+                        originalPrice, discountPercentage, offerDescription,
+                        offerExpiryDate
                 );
                 result.add(prop);
             }

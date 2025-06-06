@@ -29,14 +29,13 @@ import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 import java.util.ArrayList;
 import java.util.List;
 
-public class PropertiesFragment extends Fragment implements PropertyAdapter.OnPropertyClickListener {
-
-    private RecyclerView recyclerProperties;
+public class PropertiesFragment extends Fragment implements PropertyAdapter.OnPropertyClickListener {    private RecyclerView recyclerProperties;
     private PropertyAdapter adapter;
     private SwipeRefreshLayout swipeRefresh;
     private LinearLayout layoutEmpty;
     private EditText editSearch;
     private Button btnFilterType, btnFilterLocation, btnFilterPrice;
+    private Button btnFilterSpecialOffers, btnFilterPromoted, btnClearFilters;
     private DatabaseHelper databaseHelper;
     private List<Property> allProperties;
     private String currentUserEmail;
@@ -60,9 +59,7 @@ public class PropertiesFragment extends Fragment implements PropertyAdapter.OnPr
         loadProperties();
         
         return view;
-    }
-
-    private void initializeViews(View view) {
+    }    private void initializeViews(View view) {
         recyclerProperties = view.findViewById(R.id.recycler_properties);
         swipeRefresh = view.findViewById(R.id.swipe_refresh);
         layoutEmpty = view.findViewById(R.id.layout_empty);
@@ -70,7 +67,11 @@ public class PropertiesFragment extends Fragment implements PropertyAdapter.OnPr
         btnFilterType = view.findViewById(R.id.btn_filter_type);
         btnFilterLocation = view.findViewById(R.id.btn_filter_location);
         btnFilterPrice = view.findViewById(R.id.btn_filter_price);
-          databaseHelper = new DatabaseHelper(getContext());
+        btnFilterSpecialOffers = view.findViewById(R.id.btn_filter_special_offers);
+        btnFilterPromoted = view.findViewById(R.id.btn_filter_promoted);
+        btnClearFilters = view.findViewById(R.id.btn_clear_filters);
+        
+        databaseHelper = new DatabaseHelper(getContext());
           // Get current user email from SharedPreferences
         SharedPreferences prefs = getActivity().getSharedPreferences("UserPrefs", getContext().MODE_PRIVATE);
         currentUserEmail = prefs.getString("email", "");
@@ -122,20 +123,21 @@ public class PropertiesFragment extends Fragment implements PropertyAdapter.OnPr
 
             @Override
             public void afterTextChanged(Editable s) {}
-        });
-
-        // Filter buttons
+        });        // Filter buttons
         btnFilterType.setOnClickListener(v -> showTypeFilterDialog());
         btnFilterLocation.setOnClickListener(v -> showLocationFilterDialog());
         btnFilterPrice.setOnClickListener(v -> showPriceFilterDialog());
+        
+        // Special offers filter buttons
+        btnFilterSpecialOffers.setOnClickListener(v -> filterBySpecialOffers());
+        btnFilterPromoted.setOnClickListener(v -> filterByPromoted());
+        btnClearFilters.setOnClickListener(v -> clearAllFilters());
     }    private void loadProperties() {
         swipeRefresh.setRefreshing(true);
         
         // Load properties from API instead of database
         new PropertyConnectionTask().execute(API_URL);
-    }
-
-    private void updateEmptyState() {
+    }    private void updateEmptyState() {
         if (adapter.getItemCount() == 0) {
             recyclerProperties.setVisibility(View.GONE);
             layoutEmpty.setVisibility(View.VISIBLE);
@@ -143,6 +145,61 @@ public class PropertiesFragment extends Fragment implements PropertyAdapter.OnPr
             recyclerProperties.setVisibility(View.VISIBLE);
             layoutEmpty.setVisibility(View.GONE);
         }
+    }
+
+    // Special offers filter methods
+    private void filterBySpecialOffers() {
+        adapter.filterBySpecialOffers();
+        updateEmptyState();
+        
+        // Apply bounce animation to button
+        Animation bounce = AnimationUtils.loadAnimation(getContext(), R.anim.bounce);
+        btnFilterSpecialOffers.startAnimation(bounce);
+        
+        Toast.makeText(getContext(), "Showing special offers only", Toast.LENGTH_SHORT).show();
+    }
+
+    private void filterByPromoted() {
+        adapter.filterByPromoted();
+        updateEmptyState();
+        
+        // Apply bounce animation to button
+        Animation bounce = AnimationUtils.loadAnimation(getContext(), R.anim.bounce);
+        btnFilterPromoted.startAnimation(bounce);
+        
+        Toast.makeText(getContext(), "Showing promoted properties only", Toast.LENGTH_SHORT).show();
+    }    private void clearAllFilters() {
+        adapter.clearFilters();
+        updateEmptyState();
+        
+        // Reset filter button texts
+        btnFilterType.setText("Type");
+        btnFilterLocation.setText("Location");
+        btnFilterPrice.setText("Price");
+        
+        // Apply fade animation to clear button
+        Animation fadeIn = AnimationUtils.loadAnimation(getContext(), R.anim.fade_in);
+        btnClearFilters.startAnimation(fadeIn);
+        
+        Toast.makeText(getContext(), "All filters cleared", Toast.LENGTH_SHORT).show();
+    }
+
+    private void showOfferTypeFilterDialog() {
+        String[] offerTypes = {"All Offers", "FLASH_SALE", "EARLY_BIRD", "SEASONAL", "LIMITED_TIME", "NEW_LISTING"};
+        
+        AlertDialog.Builder builder = new AlertDialog.Builder(getContext());
+        builder.setTitle("Filter by Offer Type")
+                .setItems(offerTypes, (dialog, which) -> {
+                    String selectedOfferType = offerTypes[which];
+                    if (selectedOfferType.equals("All Offers")) {
+                        adapter.filterBySpecialOffers(); // Show all special offers
+                    } else {
+                        adapter.filterByOfferType(selectedOfferType);
+                    }
+                    updateEmptyState();
+                    Toast.makeText(getContext(), "Filtered by: " + selectedOfferType, Toast.LENGTH_SHORT).show();
+                })
+                .show();
     }
 
     private void showTypeFilterDialog() {
@@ -301,13 +358,15 @@ public class PropertiesFragment extends Fragment implements PropertyAdapter.OnPr
 
             if (result != null) {
                 try {                    List<Property> properties = JsonParser.parseProperties(result);
-                    if (properties != null && !properties.isEmpty()) {
-                        allProperties.clear();
+                    if (properties != null && !properties.isEmpty()) {                        allProperties.clear();
                         allProperties.addAll(properties);
+                        
+                        // Add sample promotion data to demonstrate special offers functionality
+                        enhancePropertiesWithPromotions(allProperties);
                         
                         // Update static field for sharing with other fragments
                         currentApiProperties.clear();
-                        currentApiProperties.addAll(properties);
+                        currentApiProperties.addAll(allProperties);
                         
                         adapter.updateProperties(allProperties);
                         updateEmptyState();
@@ -328,9 +387,7 @@ public class PropertiesFragment extends Fragment implements PropertyAdapter.OnPr
         Toast.makeText(getContext(), message, Toast.LENGTH_LONG).show();
         // If API fails, try to load from local database as fallback
         loadPropertiesFromDatabase();
-    }
-
-    private void loadPropertiesFromDatabase() {
+    }    private void loadPropertiesFromDatabase() {
         allProperties.clear();
         allProperties.addAll(databaseHelper.getAllProperties());
         adapter.updateProperties(allProperties);
@@ -338,6 +395,73 @@ public class PropertiesFragment extends Fragment implements PropertyAdapter.OnPr
         
         if (allProperties.isEmpty()) {
             Toast.makeText(getContext(), "No local properties found. Please check your internet connection.", Toast.LENGTH_SHORT).show();        }
+    }
+    
+    /**
+     * Enhance loaded properties with sample promotion data for demonstration purposes
+     * @param properties List of properties to enhance with promotions
+     */
+    private void enhancePropertiesWithPromotions(List<Property> properties) {
+        if (properties.isEmpty()) return;
+        
+        // Add special offers to some properties for demonstration
+        long currentTime = System.currentTimeMillis();
+        long oneWeekFromNow = currentTime + (7 * 24 * 60 * 60 * 1000L); // 1 week from now
+        long twoWeeksFromNow = currentTime + (14 * 24 * 60 * 60 * 1000L); // 2 weeks from now
+        
+        // Make the first property a flash sale
+        if (properties.size() > 0) {
+            Property property = properties.get(0);
+            property.setPromoted(true);
+            property.setHasSpecialOffer(true);
+            property.setOfferType("FLASH_SALE");
+            property.setOriginalPrice((int)(property.getPrice() * 1.15)); // 15% higher original price
+            property.setDiscountPercentage(15);
+            property.setOfferDescription("Flash Sale! Limited time offer - Save 15%!");
+            property.setOfferExpiryDate(oneWeekFromNow);
+        }
+        
+        // Make the second property an early bird offer
+        if (properties.size() > 1) {
+            Property property = properties.get(1);
+            property.setPromoted(true);
+            property.setHasSpecialOffer(true);
+            property.setOfferType("EARLY_BIRD");
+            property.setOriginalPrice((int)(property.getPrice() * 1.10)); // 10% higher original price
+            property.setDiscountPercentage(10);
+            property.setOfferDescription("Early Bird Special - Book now and save!");
+            property.setOfferExpiryDate(twoWeeksFromNow);
+        }
+        
+        // Make the third property promoted but without special offer
+        if (properties.size() > 2) {
+            Property property = properties.get(2);
+            property.setPromoted(true);
+            property.setHasSpecialOffer(false);
+        }
+        
+        // Make the fourth property a seasonal offer
+        if (properties.size() > 3) {
+            Property property = properties.get(3);
+            property.setHasSpecialOffer(true);
+            property.setOfferType("SEASONAL");
+            property.setOriginalPrice((int)(property.getPrice() * 1.20)); // 20% higher original price
+            property.setDiscountPercentage(20);
+            property.setOfferDescription("Winter Special - Best deals of the season!");
+            property.setOfferExpiryDate(twoWeeksFromNow);
+        }
+        
+        // Make the fifth property a new listing special
+        if (properties.size() > 4) {
+            Property property = properties.get(4);
+            property.setPromoted(true);
+            property.setHasSpecialOffer(true);
+            property.setOfferType("NEW_LISTING");
+            property.setOriginalPrice((int)(property.getPrice() * 1.08)); // 8% higher original price
+            property.setDiscountPercentage(8);
+            property.setOfferDescription("New Listing Discount - Welcome offer!");
+            property.setOfferExpiryDate(oneWeekFromNow);
+        }
     }
     
     /**

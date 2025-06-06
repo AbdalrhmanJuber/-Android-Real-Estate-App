@@ -11,7 +11,7 @@ import java.util.List;
 
 public class DatabaseHelper extends SQLiteOpenHelper {
     private static final String DATABASE_NAME = "CourseProject.db";
-    private static final int DATABASE_VERSION = 4; // Incremented to remove foreign key constraint for API properties
+    private static final int DATABASE_VERSION = 5; // Incremented to add promotion fields
     
     // Table names
     private static final String TABLE_USERS = "users";
@@ -29,8 +29,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
     private static final String KEY_COUNTRY = "country";
     private static final String KEY_CITY = "city";
     private static final String KEY_PHONE = "phone_number";
-    
-    // Property table columns
+      // Property table columns
     private static final String PROPERTY_ID = "property_id";
     private static final String PROPERTY_TITLE = "title";
     private static final String PROPERTY_TYPE = "type";
@@ -41,6 +40,15 @@ public class DatabaseHelper extends SQLiteOpenHelper {
     private static final String PROPERTY_BATHROOMS = "bathrooms";
     private static final String PROPERTY_IMAGE_URL = "image_url";
     private static final String PROPERTY_DESCRIPTION = "description";
+    
+    // Promotion fields
+    private static final String PROPERTY_IS_PROMOTED = "is_promoted";
+    private static final String PROPERTY_HAS_SPECIAL_OFFER = "has_special_offer";
+    private static final String PROPERTY_OFFER_TYPE = "offer_type";
+    private static final String PROPERTY_ORIGINAL_PRICE = "original_price";
+    private static final String PROPERTY_DISCOUNT_PERCENTAGE = "discount_percentage";
+    private static final String PROPERTY_OFFER_DESCRIPTION = "offer_description";
+    private static final String PROPERTY_OFFER_EXPIRY_DATE = "offer_expiry_date";
     
     // Favorites table columns
     private static final String FAVORITE_ID = "favorite_id";
@@ -75,8 +83,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
                 + KEY_CITY + " TEXT,"
                 + KEY_PHONE + " TEXT" + ")";
         db.execSQL(CREATE_USERS_TABLE);
-        
-        // Create properties table
+          // Create properties table
         String CREATE_PROPERTIES_TABLE = "CREATE TABLE " + TABLE_PROPERTIES + "("
                 + PROPERTY_ID + " INTEGER PRIMARY KEY AUTOINCREMENT,"
                 + PROPERTY_TITLE + " TEXT,"
@@ -87,7 +94,14 @@ public class DatabaseHelper extends SQLiteOpenHelper {
                 + PROPERTY_BEDROOMS + " INTEGER,"
                 + PROPERTY_BATHROOMS + " INTEGER,"
                 + PROPERTY_IMAGE_URL + " TEXT,"
-                + PROPERTY_DESCRIPTION + " TEXT" + ")";
+                + PROPERTY_DESCRIPTION + " TEXT,"
+                + PROPERTY_IS_PROMOTED + " INTEGER DEFAULT 0,"
+                + PROPERTY_HAS_SPECIAL_OFFER + " INTEGER DEFAULT 0,"
+                + PROPERTY_OFFER_TYPE + " TEXT,"
+                + PROPERTY_ORIGINAL_PRICE + " INTEGER,"
+                + PROPERTY_DISCOUNT_PERCENTAGE + " INTEGER DEFAULT 0,"
+                + PROPERTY_OFFER_DESCRIPTION + " TEXT,"
+                + PROPERTY_OFFER_EXPIRY_DATE + " INTEGER DEFAULT 0" + ")";
         db.execSQL(CREATE_PROPERTIES_TABLE);
           // Create favorites table - removed foreign key constraint for property_id to support API properties
         String CREATE_FAVORITES_TABLE = "CREATE TABLE " + TABLE_FAVORITES + "("
@@ -609,5 +623,99 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         cursor.close();
         db.close();
         return count;
+    }
+
+    // Method to get promoted properties
+    public List<Property> getPromotedProperties() {
+        List<Property> properties = new ArrayList<>();
+        SQLiteDatabase db = this.getReadableDatabase();
+        
+        String selection = PROPERTY_IS_PROMOTED + " = ?";
+        String[] selectionArgs = {"1"};
+        
+        Cursor cursor = db.query(TABLE_PROPERTIES, null, selection, selectionArgs, null, null, PROPERTY_PRICE);
+        
+        if (cursor.moveToFirst()) {
+            do {
+                Property property = createPropertyFromCursor(cursor);
+                properties.add(property);
+            } while (cursor.moveToNext());
+        }
+        
+        cursor.close();
+        db.close();
+        return properties;
+    }
+    
+    // Method to get properties with special offers
+    public List<Property> getSpecialOfferProperties() {
+        List<Property> properties = new ArrayList<>();
+        SQLiteDatabase db = this.getReadableDatabase();
+        
+        String selection = PROPERTY_HAS_SPECIAL_OFFER + " = ? AND (" + 
+                          PROPERTY_OFFER_EXPIRY_DATE + " = 0 OR " + 
+                          PROPERTY_OFFER_EXPIRY_DATE + " > ?)";
+        String[] selectionArgs = {"1", String.valueOf(System.currentTimeMillis())};
+        
+        Cursor cursor = db.query(TABLE_PROPERTIES, null, selection, selectionArgs, null, null, PROPERTY_DISCOUNT_PERCENTAGE + " DESC");
+        
+        if (cursor.moveToFirst()) {
+            do {
+                Property property = createPropertyFromCursor(cursor);
+                properties.add(property);
+            } while (cursor.moveToNext());
+        }
+        
+        cursor.close();
+        db.close();
+        return properties;
+    }
+    
+    // Method to get properties by offer type
+    public List<Property> getPropertiesByOfferType(String offerType) {
+        List<Property> properties = new ArrayList<>();
+        SQLiteDatabase db = this.getReadableDatabase();
+        
+        String selection = PROPERTY_HAS_SPECIAL_OFFER + " = ? AND " + PROPERTY_OFFER_TYPE + " = ?";
+        String[] selectionArgs = {"1", offerType};
+        
+        Cursor cursor = db.query(TABLE_PROPERTIES, null, selection, selectionArgs, null, null, PROPERTY_PRICE);
+        
+        if (cursor.moveToFirst()) {
+            do {
+                Property property = createPropertyFromCursor(cursor);
+                properties.add(property);
+            } while (cursor.moveToNext());
+        }
+        
+        cursor.close();
+        db.close();
+        return properties;
+    }
+    
+    // Helper method to create Property object from cursor
+    private Property createPropertyFromCursor(Cursor cursor) {
+        Property property = new Property();
+        property.setId(cursor.getInt(cursor.getColumnIndexOrThrow(PROPERTY_ID)));
+        property.setTitle(cursor.getString(cursor.getColumnIndexOrThrow(PROPERTY_TITLE)));
+        property.setType(cursor.getString(cursor.getColumnIndexOrThrow(PROPERTY_TYPE)));
+        property.setPrice(cursor.getInt(cursor.getColumnIndexOrThrow(PROPERTY_PRICE)));
+        property.setLocation(cursor.getString(cursor.getColumnIndexOrThrow(PROPERTY_LOCATION)));
+        property.setArea(cursor.getString(cursor.getColumnIndexOrThrow(PROPERTY_AREA)));
+        property.setBedrooms(cursor.getInt(cursor.getColumnIndexOrThrow(PROPERTY_BEDROOMS)));
+        property.setBathrooms(cursor.getInt(cursor.getColumnIndexOrThrow(PROPERTY_BATHROOMS)));
+        property.setImageUrl(cursor.getString(cursor.getColumnIndexOrThrow(PROPERTY_IMAGE_URL)));
+        property.setDescription(cursor.getString(cursor.getColumnIndexOrThrow(PROPERTY_DESCRIPTION)));
+        
+        // Load promotion fields
+        property.setPromoted(cursor.getInt(cursor.getColumnIndexOrThrow(PROPERTY_IS_PROMOTED)) == 1);
+        property.setHasSpecialOffer(cursor.getInt(cursor.getColumnIndexOrThrow(PROPERTY_HAS_SPECIAL_OFFER)) == 1);
+        property.setOfferType(cursor.getString(cursor.getColumnIndexOrThrow(PROPERTY_OFFER_TYPE)));
+        property.setOriginalPrice(cursor.getInt(cursor.getColumnIndexOrThrow(PROPERTY_ORIGINAL_PRICE)));
+        property.setDiscountPercentage(cursor.getInt(cursor.getColumnIndexOrThrow(PROPERTY_DISCOUNT_PERCENTAGE)));
+        property.setOfferDescription(cursor.getString(cursor.getColumnIndexOrThrow(PROPERTY_OFFER_DESCRIPTION)));
+        property.setOfferExpiryDate(cursor.getLong(cursor.getColumnIndexOrThrow(PROPERTY_OFFER_EXPIRY_DATE)));
+        
+        return property;
     }
 }

@@ -76,9 +76,16 @@
                     android:paddingHorizontal="16dp"
                     android:textSize="14sp" />
 
-            </androidx.cardview.widget.CardView>
-
-            <!-- Filter Buttons -->
+            </androidx.cardview.widget.CardView>            <!-- Filter Buttons -->
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Property Filters"
+                android:textColor="@color/text_primary"
+                android:textSize="14sp"
+                android:textStyle="bold"
+                android:layout_marginBottom="8dp" />
+            
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -116,6 +123,59 @@
                     android:text="@string/filter_price"
                     android:textColor="@color/primary_color"
                     android:textSize="12sp" />
+
+            </LinearLayout>
+
+            <!-- Special Offers Filter Section -->
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Special Offers &amp; Promotions"
+                android:textColor="@color/text_primary"
+                android:textSize="14sp"
+                android:textStyle="bold"
+                android:layout_marginTop="16dp"
+                android:layout_marginBottom="8dp" />
+            
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal">
+
+                <Button
+                    android:id="@+id/btn_filter_special_offers"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:layout_marginEnd="4dp"
+                    android:background="@drawable/offer_badge_background"
+                    android:text="Special Offers"
+                    android:textColor="@android:color/white"
+                    android:textSize="11sp"
+                    android:textStyle="bold" />
+
+                <Button
+                    android:id="@+id/btn_filter_promoted"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:layout_marginHorizontal="4dp"
+                    android:background="@drawable/promoted_badge_background"
+                    android:text="Promoted"
+                    android:textColor="@android:color/white"
+                    android:textSize="11sp"
+                    android:textStyle="bold" />
+
+                <Button
+                    android:id="@+id/btn_clear_filters"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:layout_marginStart="4dp"
+                    android:background="@drawable/button_outline"
+                    android:text="Clear All"
+                    android:textColor="@color/primary_color"
+                    android:textSize="11sp" />
 
             </LinearLayout>
 
