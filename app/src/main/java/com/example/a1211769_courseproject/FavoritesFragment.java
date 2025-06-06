@@ -2,6 +2,7 @@ package com.example.a1211769_courseproject;
 
 import android.content.SharedPreferences;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -46,9 +47,7 @@ public class FavoritesFragment extends Fragment implements FavoritesAdapter.OnFa
         loadFavoriteProperties();
         
         return view;
-    }
-
-    private void initializeViews(View view) {
+    }    private void initializeViews(View view) {
         recyclerFavorites = view.findViewById(R.id.recycler_favorites);
         layoutEmptyState = view.findViewById(R.id.layout_empty_state);
         imgEmptyState = view.findViewById(R.id.img_empty_state);
@@ -57,9 +56,18 @@ public class FavoritesFragment extends Fragment implements FavoritesAdapter.OnFa
         // Initialize database helper
         databaseHelper = new DatabaseHelper(getContext());
         
-        // Get current user email from SharedPreferences
-        SharedPreferences prefs = getActivity().getSharedPreferences("user_prefs", getActivity().MODE_PRIVATE);
-        currentUserEmail = prefs.getString("user_email", "");
+        // Get current user email from SharedPreferences (same as PropertiesFragment)
+        SharedPreferences prefs = getActivity().getSharedPreferences("UserPrefs", getContext().MODE_PRIVATE);
+        currentUserEmail = prefs.getString("email", "");
+        
+        Log.d("FavoritesFragment", "Retrieved user email from SharedPreferences: '" + currentUserEmail + "'");
+        
+        // If UserPrefs is empty, try login_preferences as fallback
+        if (currentUserEmail == null || currentUserEmail.trim().isEmpty()) {
+            SharedPreferences loginPrefs = getActivity().getSharedPreferences("login_preferences", getContext().MODE_PRIVATE);
+            currentUserEmail = loginPrefs.getString("email", "");
+            Log.d("FavoritesFragment", "Fallback: Retrieved user email from login_preferences: '" + currentUserEmail + "'");
+        }
         
         // Initialize favorites list
         favoriteProperties = new ArrayList<>();
@@ -74,12 +82,23 @@ public class FavoritesFragment extends Fragment implements FavoritesAdapter.OnFa
         favoritesAdapter = new FavoritesAdapter(getContext(), favoriteProperties, currentUserEmail);
         favoritesAdapter.setOnFavoriteActionListener(this);
         recyclerFavorites.setAdapter(favoritesAdapter);
-    }
-
-    private void loadFavoriteProperties() {
+    }    private void loadFavoriteProperties() {
+        Log.d("FavoritesFragment", "Loading favorite properties for user: " + currentUserEmail);
+        
         if (currentUserEmail != null && !currentUserEmail.isEmpty()) {
-            // Load favorite properties from database
-            favoriteProperties = databaseHelper.getFavoriteProperties(currentUserEmail);
+            // Get current API properties from PropertiesFragment
+            List<Property> apiProperties = PropertiesFragment.getCurrentApiProperties();
+            Log.d("FavoritesFragment", "Retrieved " + apiProperties.size() + " API properties");
+            
+            if (!apiProperties.isEmpty()) {
+                // Use the new overloaded method that works with API properties
+                favoriteProperties = databaseHelper.getFavoriteProperties(currentUserEmail, apiProperties);
+                Log.d("FavoritesFragment", "Found " + (favoriteProperties != null ? favoriteProperties.size() : 0) + " favorite properties");
+            } else {
+                // Fallback to old method if no API properties available
+                Log.d("FavoritesFragment", "No API properties available, using fallback method");
+                favoriteProperties = databaseHelper.getFavoriteProperties(currentUserEmail);
+            }
             
             if (favoriteProperties != null && !favoriteProperties.isEmpty()) {
                 showFavoritesList();
@@ -88,6 +107,7 @@ public class FavoritesFragment extends Fragment implements FavoritesAdapter.OnFa
                 showEmptyState();
             }
         } else {
+            Log.w("FavoritesFragment", "No user email available for loading favorites");
             showEmptyState();
         }
     }

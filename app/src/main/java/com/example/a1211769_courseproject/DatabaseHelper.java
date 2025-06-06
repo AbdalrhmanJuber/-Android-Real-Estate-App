@@ -475,36 +475,87 @@ public class DatabaseHelper extends SQLiteOpenHelper {
             }
         }
     }
+      public List<Property> getFavoriteProperties(String userEmail) {
+        return getFavoriteProperties(userEmail, null);
+    }
     
-    public List<Property> getFavoriteProperties(String userEmail) {
+    // New method that supports API-based properties
+    public List<Property> getFavoriteProperties(String userEmail, List<Property> apiProperties) {
         List<Property> properties = new ArrayList<>();
-        SQLiteDatabase db = this.getReadableDatabase();
+        SQLiteDatabase db = null;
+        Cursor cursor = null;
         
-        String query = "SELECT p.* FROM " + TABLE_PROPERTIES + " p " +
-                      "INNER JOIN " + TABLE_FAVORITES + " f ON p." + PROPERTY_ID + " = f." + FAVORITE_PROPERTY_ID +
-                      " WHERE f." + FAVORITE_USER_EMAIL + " = ?";
-        
-        Cursor cursor = db.rawQuery(query, new String[]{userEmail});
-        
-        if (cursor.moveToFirst()) {
-            do {
-                Property property = new Property();
-                property.setId(cursor.getInt(cursor.getColumnIndexOrThrow(PROPERTY_ID)));
-                property.setTitle(cursor.getString(cursor.getColumnIndexOrThrow(PROPERTY_TITLE)));
-                property.setType(cursor.getString(cursor.getColumnIndexOrThrow(PROPERTY_TYPE)));
-                property.setPrice(cursor.getInt(cursor.getColumnIndexOrThrow(PROPERTY_PRICE)));
-                property.setLocation(cursor.getString(cursor.getColumnIndexOrThrow(PROPERTY_LOCATION)));
-                property.setArea(cursor.getString(cursor.getColumnIndexOrThrow(PROPERTY_AREA)));
-                property.setBedrooms(cursor.getInt(cursor.getColumnIndexOrThrow(PROPERTY_BEDROOMS)));
-                property.setBathrooms(cursor.getInt(cursor.getColumnIndexOrThrow(PROPERTY_BATHROOMS)));
-                property.setImageUrl(cursor.getString(cursor.getColumnIndexOrThrow(PROPERTY_IMAGE_URL)));
-                property.setDescription(cursor.getString(cursor.getColumnIndexOrThrow(PROPERTY_DESCRIPTION)));
-                properties.add(property);
-            } while (cursor.moveToNext());
+        try {
+            db = this.getReadableDatabase();
+            
+            // Get favorite property IDs for the user
+            String query = "SELECT " + FAVORITE_PROPERTY_ID + " FROM " + TABLE_FAVORITES + 
+                          " WHERE " + FAVORITE_USER_EMAIL + " = ?";
+            
+            cursor = db.rawQuery(query, new String[]{userEmail});
+            
+            List<Integer> favoritePropertyIds = new ArrayList<>();
+            while (cursor.moveToNext()) {
+                int propertyId = cursor.getInt(cursor.getColumnIndexOrThrow(FAVORITE_PROPERTY_ID));
+                favoritePropertyIds.add(propertyId);
+            }
+            
+            Log.d("DatabaseHelper", "Found " + favoritePropertyIds.size() + " favorite property IDs: " + favoritePropertyIds);
+            
+            if (!favoritePropertyIds.isEmpty()) {
+                if (apiProperties != null && !apiProperties.isEmpty()) {
+                    // Filter API properties based on favorite IDs
+                    Log.d("DatabaseHelper", "Filtering from " + apiProperties.size() + " API properties");
+                    for (Property property : apiProperties) {
+                        if (favoritePropertyIds.contains(property.getId())) {
+                            properties.add(property);
+                            Log.d("DatabaseHelper", "Added favorite property: " + property.getId() + " - " + property.getTitle());
+                        }
+                    }
+                } else {
+                    // Fallback: try to get properties from local database (for backward compatibility)
+                    Log.d("DatabaseHelper", "No API properties provided, trying local database fallback");
+                    cursor.close();
+                    cursor = null;
+                    
+                    String localQuery = "SELECT p.* FROM " + TABLE_PROPERTIES + " p " +
+                                      "INNER JOIN " + TABLE_FAVORITES + " f ON p." + PROPERTY_ID + " = f." + FAVORITE_PROPERTY_ID +
+                                      " WHERE f." + FAVORITE_USER_EMAIL + " = ?";
+                    
+                    cursor = db.rawQuery(localQuery, new String[]{userEmail});
+                    
+                    if (cursor.moveToFirst()) {
+                        do {
+                            Property property = new Property();
+                            property.setId(cursor.getInt(cursor.getColumnIndexOrThrow(PROPERTY_ID)));
+                            property.setTitle(cursor.getString(cursor.getColumnIndexOrThrow(PROPERTY_TITLE)));
+                            property.setType(cursor.getString(cursor.getColumnIndexOrThrow(PROPERTY_TYPE)));
+                            property.setPrice(cursor.getInt(cursor.getColumnIndexOrThrow(PROPERTY_PRICE)));
+                            property.setLocation(cursor.getString(cursor.getColumnIndexOrThrow(PROPERTY_LOCATION)));
+                            property.setArea(cursor.getString(cursor.getColumnIndexOrThrow(PROPERTY_AREA)));
+                            property.setBedrooms(cursor.getInt(cursor.getColumnIndexOrThrow(PROPERTY_BEDROOMS)));
+                            property.setBathrooms(cursor.getInt(cursor.getColumnIndexOrThrow(PROPERTY_BATHROOMS)));
+                            property.setImageUrl(cursor.getString(cursor.getColumnIndexOrThrow(PROPERTY_IMAGE_URL)));
+                            property.setDescription(cursor.getString(cursor.getColumnIndexOrThrow(PROPERTY_DESCRIPTION)));
+                            properties.add(property);
+                        } while (cursor.moveToNext());
+                    }
+                }
+            }
+            
+            Log.d("DatabaseHelper", "Returning " + properties.size() + " favorite properties");
+            
+        } catch (Exception e) {
+            Log.e("DatabaseHelper", "Error getting favorite properties: " + e.getMessage(), e);
+        } finally {
+            if (cursor != null) {
+                cursor.close();
+            }
+            if (db != null) {
+                db.close();
+            }
         }
         
-        cursor.close();
-        db.close();
         return properties;
     }
       // Reservations CRUD Operations

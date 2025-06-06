@@ -41,6 +41,9 @@ public class PropertiesFragment extends Fragment implements PropertyAdapter.OnPr
     private List<Property> allProperties;
     private String currentUserEmail;
     private static final String API_URL = "https://mocki.io/v1/8345f53d-b99e-4d4d-b4cb-eea3042aa04f";
+    
+    // Static field to store current API properties for sharing with other fragments
+    private static List<Property> currentApiProperties = new ArrayList<>();
 
     @Nullable
     @Override
@@ -311,11 +314,15 @@ public class PropertiesFragment extends Fragment implements PropertyAdapter.OnPr
             swipeRefresh.setRefreshing(false);
 
             if (result != null) {
-                try {
-                    List<Property> properties = JsonParser.parseProperties(result);
+                try {                    List<Property> properties = JsonParser.parseProperties(result);
                     if (properties != null && !properties.isEmpty()) {
                         allProperties.clear();
                         allProperties.addAll(properties);
+                        
+                        // Update static field for sharing with other fragments
+                        currentApiProperties.clear();
+                        currentApiProperties.addAll(properties);
+                        
                         adapter.updateProperties(allProperties);
                         updateEmptyState();
                         Toast.makeText(getContext(), "Properties loaded successfully", Toast.LENGTH_SHORT).show();
@@ -366,8 +373,15 @@ public class PropertiesFragment extends Fragment implements PropertyAdapter.OnPr
             Log.d("PropertiesFragment", "Default prefs all keys: " + defaultPrefs.getAll().toString());
         } catch (Exception e) {
             Log.d("PropertiesFragment", "No default prefs found");
-        }
-        
+        }        
         Log.d("PropertiesFragment", "Final currentUserEmail: '" + currentUserEmail + "'");
+    }
+    
+    /**
+     * Get current API properties for sharing with other fragments (like FavoritesFragment)
+     * @return List of current API properties, or empty list if none loaded
+     */
+    public static List<Property> getCurrentApiProperties() {
+        return currentApiProperties != null ? new ArrayList<>(currentApiProperties) : new ArrayList<>();
     }
 }
