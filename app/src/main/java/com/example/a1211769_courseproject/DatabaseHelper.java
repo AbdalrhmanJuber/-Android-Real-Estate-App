@@ -223,18 +223,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         db.close();
         return user;
     }
-      // Public method to insert sample properties
-    public void insertSampleProperties() {
-        // Properties are now loaded from API in PropertiesFragment
-        // This method is kept for backward compatibility but does nothing
-        Log.d("DatabaseHelper", "Properties are loaded from API, not inserted locally");
-    }
-
-    // Insert sample properties from API (deprecated - kept for compatibility)
-    private void insertSampleProperties(SQLiteDatabase db) {
-        // No longer inserting static data - properties come from API
-        Log.d("DatabaseHelper", "Static property insertion removed - using API data");
-    }
+  
     
     // Properties CRUD Operations
     public List<Property> getAllProperties() {
@@ -348,72 +337,41 @@ public class DatabaseHelper extends SQLiteOpenHelper {
           cursor.close();
         db.close();
         return properties;
-    }
-
-    // Favorites CRUD Operations
+    }    // Favorites CRUD Operations
     public boolean addToFavorites(String userEmail, int propertyId) {
         SQLiteDatabase db = null;
         try {
-            Log.d("DatabaseHelper", "=== ADD TO FAVORITES DEBUG ===");
-            Log.d("DatabaseHelper", "Attempting to add favorite - Email: '" + userEmail + "', PropertyID: " + propertyId);
-            
             // Validate inputs first
             if (userEmail == null || userEmail.trim().isEmpty()) {
-                Log.e("DatabaseHelper", "Invalid user email for favorites: '" + userEmail + "'");
                 return false;
             }
             
             if (propertyId <= 0) {
-                Log.e("DatabaseHelper", "Invalid property ID: " + propertyId);
                 return false;
             }
             
             db = this.getWritableDatabase();
-            Log.d("DatabaseHelper", "Got writable database successfully");
-              // Check if already in favorites (reuse existing db connection)
+            
+            // Check if already in favorites (reuse existing db connection)
             boolean alreadyFavorite = isPropertyInFavorites(userEmail, propertyId, db);
-            Log.d("DatabaseHelper", "Already in favorites check: " + alreadyFavorite);
             if (alreadyFavorite) {
-                Log.d("DatabaseHelper", "Property already in favorites");
                 return false; // Already in favorites
-            }            // Check if user exists in database (reuse existing db connection)
+            }
+            
+            // Check if user exists in database (reuse existing db connection)
             if (!checkUserExists(userEmail, db)) {
-                Log.e("DatabaseHelper", "User does not exist in database: " + userEmail);
                 return false;
             }
-            Log.d("DatabaseHelper", "User exists in database: " + userEmail);
             
             ContentValues values = new ContentValues();
             values.put(FAVORITE_USER_EMAIL, userEmail);
             values.put(FAVORITE_PROPERTY_ID, propertyId);
             values.put(FAVORITE_DATE_ADDED, System.currentTimeMillis() / 1000); // Unix timestamp
             
-            Log.d("DatabaseHelper", "Prepared ContentValues: " + values.toString());
-            
             long result = db.insert(TABLE_FAVORITES, null, values);
-            Log.d("DatabaseHelper", "Insert result: " + result);
-            
-            if (result != -1) {
-                Log.d("DatabaseHelper", "Successfully added to favorites");
-                return true;
-            } else {
-                Log.e("DatabaseHelper", "Failed to insert favorite - database insert returned -1");
-                
-                // Check table structure
-                Cursor cursor = db.rawQuery("PRAGMA table_info(" + TABLE_FAVORITES + ")", null);
-                StringBuilder tableInfo = new StringBuilder("Favorites table structure: ");
-                while (cursor.moveToNext()) {
-                    String columnName = cursor.getString(1);
-                    String columnType = cursor.getString(2);
-                    tableInfo.append(columnName).append("(").append(columnType).append(") ");
-                }
-                cursor.close();
-                Log.d("DatabaseHelper", tableInfo.toString());
-                
-                return false;
-            }
+            return result != -1;
         } catch (Exception e) {
-            Log.e("DatabaseHelper", "Error adding to favorites: " + e.getMessage(), e);
+            Log.e("DatabaseHelper", "Error adding to favorites: " + e.getMessage());
             return false;
         } finally {
             if (db != null) {
@@ -478,8 +436,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
       public List<Property> getFavoriteProperties(String userEmail) {
         return getFavoriteProperties(userEmail, null);
     }
-    
-    // New method that supports API-based properties
+      // New method that supports API-based properties
     public List<Property> getFavoriteProperties(String userEmail, List<Property> apiProperties) {
         List<Property> properties = new ArrayList<>();
         SQLiteDatabase db = null;
@@ -500,21 +457,16 @@ public class DatabaseHelper extends SQLiteOpenHelper {
                 favoritePropertyIds.add(propertyId);
             }
             
-            Log.d("DatabaseHelper", "Found " + favoritePropertyIds.size() + " favorite property IDs: " + favoritePropertyIds);
-            
             if (!favoritePropertyIds.isEmpty()) {
                 if (apiProperties != null && !apiProperties.isEmpty()) {
                     // Filter API properties based on favorite IDs
-                    Log.d("DatabaseHelper", "Filtering from " + apiProperties.size() + " API properties");
                     for (Property property : apiProperties) {
                         if (favoritePropertyIds.contains(property.getId())) {
                             properties.add(property);
-                            Log.d("DatabaseHelper", "Added favorite property: " + property.getId() + " - " + property.getTitle());
                         }
                     }
                 } else {
                     // Fallback: try to get properties from local database (for backward compatibility)
-                    Log.d("DatabaseHelper", "No API properties provided, trying local database fallback");
                     cursor.close();
                     cursor = null;
                     
@@ -543,10 +495,8 @@ public class DatabaseHelper extends SQLiteOpenHelper {
                 }
             }
             
-            Log.d("DatabaseHelper", "Returning " + properties.size() + " favorite properties");
-            
         } catch (Exception e) {
-            Log.e("DatabaseHelper", "Error getting favorite properties: " + e.getMessage(), e);
+            Log.e("DatabaseHelper", "Error getting favorite properties: " + e.getMessage());
         } finally {
             if (cursor != null) {
                 cursor.close();

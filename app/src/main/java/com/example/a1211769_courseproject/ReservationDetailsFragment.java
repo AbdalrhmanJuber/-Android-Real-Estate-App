@@ -174,20 +174,13 @@ public class ReservationDetailsFragment extends Fragment {
         String specialRequests = editSpecialRequests.getText().toString().trim();        // Save reservation to database
         DatabaseHelper databaseHelper = new DatabaseHelper(getContext());
         
-        // Debug logging
-        android.util.Log.d("ReservationDetails", "Creating reservation for user: " + currentUserEmail);
-        android.util.Log.d("ReservationDetails", "Property: " + property.getTitle() + " (ID: " + property.getId() + ")");
-        
         long reservationId = databaseHelper.insertReservation(
             currentUserEmail, 
             property, 
-            editReservationDate.getText().toString(),
-            visitTime, 
-            contactPhone, 
+            editReservationDate.getText().toString(),            visitTime, 
+            contactPhone,
             specialRequests
         );
-        
-        android.util.Log.d("ReservationDetails", "Reservation created with ID: " + reservationId);
         
         if (reservationId != -1) {
             // Show success confirmation

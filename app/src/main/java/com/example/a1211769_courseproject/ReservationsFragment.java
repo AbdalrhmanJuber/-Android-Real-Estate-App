@@ -69,13 +69,9 @@ public class ReservationsFragment extends Fragment {    private RecyclerView res
         // Add item animation
         reservationsRecyclerView.setItemAnimator(new androidx.recyclerview.widget.DefaultItemAnimator());
     }    private void loadReservations() {
-        try {
-            // Get current user email from SharedPreferences
+        try {            // Get current user email from SharedPreferences
             SharedPreferences sharedPreferences = getContext().getSharedPreferences("UserPrefs", Context.MODE_PRIVATE);
             String userEmail = sharedPreferences.getString("email", "");
-            
-            // Debug logging
-            android.util.Log.d("ReservationsFragment", "User email from SharedPrefs: '" + userEmail + "'");
             
             if (userEmail.isEmpty()) {
                 showEmptyState("Please login to view your reservations");
@@ -84,13 +80,6 @@ public class ReservationsFragment extends Fragment {    private RecyclerView res
             
             // Load reservations from database
             List<Reservation> reservations = databaseHelper.getUserReservations(userEmail);
-            
-            // Debug logging
-            android.util.Log.d("ReservationsFragment", "Number of reservations found: " + reservations.size());
-            for (int i = 0; i < reservations.size(); i++) {
-                Reservation r = reservations.get(i);
-                android.util.Log.d("ReservationsFragment", "Reservation " + i + ": " + r.getPropertyTitle() + " - " + r.getStatus());
-            }
             
             // Update UI based on results
             if (reservations.isEmpty()) {
