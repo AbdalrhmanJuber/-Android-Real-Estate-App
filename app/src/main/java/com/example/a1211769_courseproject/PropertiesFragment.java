@@ -5,6 +5,7 @@ import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.text.Editable;
 import android.text.TextWatcher;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -66,12 +67,43 @@ public class PropertiesFragment extends Fragment implements PropertyAdapter.OnPr
         btnFilterType = view.findViewById(R.id.btn_filter_type);
         btnFilterLocation = view.findViewById(R.id.btn_filter_location);
         btnFilterPrice = view.findViewById(R.id.btn_filter_price);
+          databaseHelper = new DatabaseHelper(getContext());
         
-        databaseHelper = new DatabaseHelper(getContext());
-        
-        // Get current user email from SharedPreferences
+        // Get current user email from SharedPreferences with debug logging
         SharedPreferences prefs = getActivity().getSharedPreferences("UserPrefs", getContext().MODE_PRIVATE);
         currentUserEmail = prefs.getString("email", "");
+        
+        // Debug logging for SharedPreferences
+        Log.d("PropertiesFragment", "SharedPreferences debug:");
+        Log.d("PropertiesFragment", "Current user email from UserPrefs: '" + currentUserEmail + "'");
+        Log.d("PropertiesFragment", "All UserPrefs keys: " + prefs.getAll().keySet().toString());
+        
+        // Also check login_preferences for comparison
+        SharedPreferences loginPrefs = getActivity().getSharedPreferences("login_preferences", getContext().MODE_PRIVATE);
+        String loginEmail = loginPrefs.getString("email", "");
+        Log.d("PropertiesFragment", "Email from login_preferences: '" + loginEmail + "'");
+          // If UserPrefs is empty but login_preferences has email, copy it over
+        if ((currentUserEmail == null || currentUserEmail.trim().isEmpty()) && 
+            (loginEmail != null && !loginEmail.trim().isEmpty())) {
+            Log.d("PropertiesFragment", "Copying email from login_preferences to UserPrefs");
+            SharedPreferences.Editor editor = prefs.edit();
+            editor.putString("email", loginEmail);
+            editor.apply();
+            currentUserEmail = loginEmail;
+        }
+        
+        // Test database connectivity and user verification
+        if (currentUserEmail != null && !currentUserEmail.trim().isEmpty()) {
+            User user = databaseHelper.getUserByEmail(currentUserEmail);
+            if (user != null) {
+                Log.d("PropertiesFragment", "User found in database: " + user.getEmail() + " (ID: " + user.getId() + ")");
+            } else {
+                Log.w("PropertiesFragment", "User NOT found in database for email: " + currentUserEmail);
+            }
+        }
+
+        // Call debug method
+        debugSharedPreferences();
     }
 
     private void setupRecyclerView() {
@@ -314,5 +346,28 @@ public class PropertiesFragment extends Fragment implements PropertyAdapter.OnPr
         if (allProperties.isEmpty()) {
             Toast.makeText(getContext(), "No local properties found. Please check your internet connection.", Toast.LENGTH_SHORT).show();
         }
+    }
+
+    // Debug method to check all SharedPreferences
+    private void debugSharedPreferences() {
+        Log.d("PropertiesFragment", "=== SHARED PREFERENCES DEBUG ===");
+        
+        // Check UserPrefs
+        SharedPreferences userPrefs = getActivity().getSharedPreferences("UserPrefs", getContext().MODE_PRIVATE);
+        Log.d("PropertiesFragment", "UserPrefs all keys: " + userPrefs.getAll().toString());
+        
+        // Check login_preferences
+        SharedPreferences loginPrefs = getActivity().getSharedPreferences("login_preferences", getContext().MODE_PRIVATE);
+        Log.d("PropertiesFragment", "login_preferences all keys: " + loginPrefs.getAll().toString());
+        
+        // Check if there are any other SharedPreferences files
+        try {
+            SharedPreferences defaultPrefs = getActivity().getSharedPreferences(getActivity().getPackageName() + "_preferences", getContext().MODE_PRIVATE);
+            Log.d("PropertiesFragment", "Default prefs all keys: " + defaultPrefs.getAll().toString());
+        } catch (Exception e) {
+            Log.d("PropertiesFragment", "No default prefs found");
+        }
+        
+        Log.d("PropertiesFragment", "Final currentUserEmail: '" + currentUserEmail + "'");
     }
 }

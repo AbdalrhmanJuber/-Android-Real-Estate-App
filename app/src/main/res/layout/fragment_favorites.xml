@@ -7,12 +7,15 @@
     android:orientation="vertical"
     android:padding="16dp">
 
+    <!-- Header Section -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:background="@color/card_background"
         android:orientation="vertical"
-        android:padding="20dp">        <ImageView
+        android:padding="20dp">
+
+        <ImageView
             android:layout_width="64dp"
             android:layout_height="64dp"
             android:layout_gravity="center"
@@ -41,29 +44,70 @@
 
     </LinearLayout>
 
+    <!-- Favorites Content -->
     <LinearLayout
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
+        android:layout_height="match_parent"
         android:layout_marginTop="16dp"
         android:background="@color/card_background"
-        android:orientation="vertical"
-        android:padding="20dp">
+        android:orientation="vertical">
 
+        <!-- Content Header -->
         <TextView
+            android:id="@+id/txt_favorites_title"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginBottom="16dp"
+            android:layout_margin="20dp"
             android:text="Favorite Properties"
             android:textColor="@color/primary_color"
             android:textSize="18sp"
             android:textStyle="bold" />
 
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="@string/no_favorites"
-            android:textColor="@color/text_secondary"
-            android:textSize="16sp" />
+        <!-- Favorites RecyclerView -->
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/recycler_favorites"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:layout_marginHorizontal="8dp"
+            android:layout_marginBottom="8dp"
+            android:visibility="gone" />
+
+        <!-- Empty State -->
+        <LinearLayout
+            android:id="@+id/layout_empty_state"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:gravity="center"
+            android:orientation="vertical"
+            android:padding="40dp"
+            android:visibility="visible">
+
+            <ImageView
+                android:id="@+id/img_empty_state"
+                android:layout_width="100dp"
+                android:layout_height="100dp"
+                android:layout_marginBottom="24dp"
+                android:src="@drawable/ic_heart_outline"
+                app:tint="@color/text_secondary" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="8dp"
+                android:text="@string/no_favorites"
+                android:textColor="@color/text_secondary"
+                android:textSize="18sp"
+                android:textStyle="bold" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:gravity="center"
+                android:text="Start adding properties to your favorites to see them here"
+                android:textColor="@color/text_secondary"
+                android:textSize="14sp" />
+
+        </LinearLayout>
 
     </LinearLayout>
 

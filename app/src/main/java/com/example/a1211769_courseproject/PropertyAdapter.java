@@ -1,6 +1,7 @@
 package com.example.a1211769_courseproject;
 
 import android.content.Context;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -33,14 +34,21 @@ public class PropertyAdapter extends RecyclerView.Adapter<PropertyAdapter.Proper
     public interface OnPropertyClickListener {
         void onPropertyClick(Property property);
         void onReserveClick(Property property);
-    }
-
-    public PropertyAdapter(Context context, List<Property> properties, String userEmail) {
+    }    public PropertyAdapter(Context context, List<Property> properties, String userEmail) {
         this.context = context;
         this.properties = properties;
         this.propertiesFiltered = new ArrayList<>(properties);
         this.databaseHelper = new DatabaseHelper(context);
-        this.currentUserEmail = userEmail;
+        this.currentUserEmail = userEmail != null ? userEmail : "";
+        
+        // Enhanced logging for user email
+        Log.d("PropertyAdapter", "Constructor - Received user email: '" + userEmail + "'");
+        Log.d("PropertyAdapter", "Constructor - Set currentUserEmail to: '" + this.currentUserEmail + "'");
+        if (this.currentUserEmail.trim().isEmpty()) {
+            Log.w("PropertyAdapter", "User email is empty - favorites functionality may not work");
+        } else {
+            Log.d("PropertyAdapter", "User email is valid for favorites functionality");
+        }
     }
 
     public void setOnPropertyClickListener(OnPropertyClickListener listener) {
@@ -219,21 +227,40 @@ public class PropertyAdapter extends RecyclerView.Adapter<PropertyAdapter.Proper
                     listener.onPropertyClick(property);
                 }
             });
-        }
-
-        private void toggleFavorite(Property property) {
+        }        private void toggleFavorite(Property property) {
+            Log.d("PropertyAdapter", "toggleFavorite called - UserEmail: '" + currentUserEmail + "', Property: " + (property != null ? property.getId() : "null"));
+            
+            // Validate user email
+            if (currentUserEmail == null || currentUserEmail.trim().isEmpty()) {
+                Log.w("PropertyAdapter", "User email validation failed: '" + currentUserEmail + "'");
+                Toast.makeText(context, "Please log in to add favorites", Toast.LENGTH_SHORT).show();
+                return;
+            }
+            
+            // Validate property
+            if (property == null || property.getId() <= 0) {
+                Log.w("PropertyAdapter", "Property validation failed - Property: " + (property != null ? property.getId() : "null"));
+                Toast.makeText(context, "Invalid property", Toast.LENGTH_SHORT).show();
+                return;
+            }
+            
             boolean isFavorite = databaseHelper.isPropertyInFavorites(currentUserEmail, property.getId());
+            Log.d("PropertyAdapter", "Current favorite status: " + isFavorite);
             
             if (isFavorite) {
                 // Remove from favorites
                 boolean removed = databaseHelper.removeFromFavorites(currentUserEmail, property.getId());
+                Log.d("PropertyAdapter", "Remove result: " + removed);
                 if (removed) {
                     btnFavorite.setImageResource(R.drawable.ic_heart_outline);
                     Toast.makeText(context, "Removed from favorites", Toast.LENGTH_SHORT).show();
+                } else {
+                    Toast.makeText(context, "Failed to remove from favorites", Toast.LENGTH_SHORT).show();
                 }
             } else {
                 // Add to favorites with heart animation
                 boolean added = databaseHelper.addToFavorites(currentUserEmail, property.getId());
+                Log.d("PropertyAdapter", "Add result: " + added);
                 if (added) {
                     btnFavorite.setImageResource(R.drawable.ic_heart_filled);
                     
@@ -249,6 +276,8 @@ public class PropertyAdapter extends RecyclerView.Adapter<PropertyAdapter.Proper
                     
                     btnFavorite.startAnimation(heartAnimation);
                     Toast.makeText(context, "Added to favorites", Toast.LENGTH_SHORT).show();
+                } else {
+                    Toast.makeText(context, "Failed to add to favorites", Toast.LENGTH_SHORT).show();
                 }
             }
         }

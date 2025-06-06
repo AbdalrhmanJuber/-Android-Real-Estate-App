@@ -2,6 +2,7 @@ package com.example.a1211769_courseproject;
 
 import android.content.SharedPreferences;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -50,9 +51,7 @@ public class PropertyDetailsFragment extends Fragment {
         args.putSerializable(ARG_PROPERTY, property);
         fragment.setArguments(args);
         return fragment;
-    }
-
-    @Override
+    }    @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         if (getArguments() != null) {
@@ -61,9 +60,16 @@ public class PropertyDetailsFragment extends Fragment {
         
         databaseHelper = new DatabaseHelper(getContext());
         
-        // Get current user email
-        SharedPreferences prefs = getActivity().getSharedPreferences("UserPrefs", getContext().MODE_PRIVATE);
-        currentUserEmail = prefs.getString("email", "");
+        // Get current user email with validation
+        if (getActivity() != null) {
+            SharedPreferences prefs = getActivity().getSharedPreferences("UserPrefs", getContext().MODE_PRIVATE);
+            currentUserEmail = prefs.getString("email", "");
+            
+            // Validate email
+            if (currentUserEmail == null || currentUserEmail.trim().isEmpty()) {
+                Log.w("PropertyDetailsFragment", "No user email found in preferences");
+            }
+        }
     }
 
     @Nullable
@@ -150,9 +156,19 @@ public class PropertyDetailsFragment extends Fragment {
                 getParentFragmentManager().popBackStack();
             }
         });
-    }
-
-    private void toggleFavorite() {
+    }    private void toggleFavorite() {
+        // Validate user email
+        if (currentUserEmail == null || currentUserEmail.trim().isEmpty()) {
+            Toast.makeText(getContext(), "Please log in to add favorites", Toast.LENGTH_SHORT).show();
+            return;
+        }
+        
+        // Validate property
+        if (property == null || property.getId() <= 0) {
+            Toast.makeText(getContext(), "Invalid property", Toast.LENGTH_SHORT).show();
+            return;
+        }
+        
         boolean isFavorite = databaseHelper.isPropertyInFavorites(currentUserEmail, property.getId());
         
         if (isFavorite) {
@@ -161,6 +177,8 @@ public class PropertyDetailsFragment extends Fragment {
             if (removed) {
                 btnFavorite.setImageResource(R.drawable.ic_heart_outline);
                 Toast.makeText(getContext(), "Removed from favorites", Toast.LENGTH_SHORT).show();
+            } else {
+                Toast.makeText(getContext(), "Failed to remove from favorites", Toast.LENGTH_SHORT).show();
             }
         } else {
             // Add to favorites with heart animation
@@ -180,6 +198,8 @@ public class PropertyDetailsFragment extends Fragment {
                 
                 btnFavorite.startAnimation(heartAnimation);
                 Toast.makeText(getContext(), "Added to favorites", Toast.LENGTH_SHORT).show();
+            } else {
+                Toast.makeText(getContext(), "Failed to add to favorites", Toast.LENGTH_SHORT).show();
             }
         }
     }

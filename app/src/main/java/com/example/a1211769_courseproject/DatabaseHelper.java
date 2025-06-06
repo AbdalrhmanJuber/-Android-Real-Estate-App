@@ -11,7 +11,7 @@ import java.util.List;
 
 public class DatabaseHelper extends SQLiteOpenHelper {
     private static final String DATABASE_NAME = "CourseProject.db";
-    private static final int DATABASE_VERSION = 3; // Incremented for reservation table changes
+    private static final int DATABASE_VERSION = 4; // Incremented to remove foreign key constraint for API properties
     
     // Table names
     private static final String TABLE_USERS = "users";
@@ -89,16 +89,14 @@ public class DatabaseHelper extends SQLiteOpenHelper {
                 + PROPERTY_IMAGE_URL + " TEXT,"
                 + PROPERTY_DESCRIPTION + " TEXT" + ")";
         db.execSQL(CREATE_PROPERTIES_TABLE);
-        
-        // Create favorites table
+          // Create favorites table - removed foreign key constraint for property_id to support API properties
         String CREATE_FAVORITES_TABLE = "CREATE TABLE " + TABLE_FAVORITES + "("
                 + FAVORITE_ID + " INTEGER PRIMARY KEY AUTOINCREMENT,"
                 + FAVORITE_USER_EMAIL + " TEXT,"
                 + FAVORITE_PROPERTY_ID + " INTEGER,"
                 + FAVORITE_DATE_ADDED + " TEXT,"
-                + "FOREIGN KEY(" + FAVORITE_USER_EMAIL + ") REFERENCES " + TABLE_USERS + "(" + KEY_EMAIL + "),"
-                + "FOREIGN KEY(" + FAVORITE_PROPERTY_ID + ") REFERENCES " + TABLE_PROPERTIES + "(" + PROPERTY_ID + ")" + ")";
-        db.execSQL(CREATE_FAVORITES_TABLE);        // Create reservations table with property details stored directly
+                + "FOREIGN KEY(" + FAVORITE_USER_EMAIL + ") REFERENCES " + TABLE_USERS + "(" + KEY_EMAIL + ")" + ")";
+        db.execSQL(CREATE_FAVORITES_TABLE);// Create reservations table with property details stored directly
         String CREATE_RESERVATIONS_TABLE = "CREATE TABLE " + TABLE_RESERVATIONS + "("
                 + RESERVATION_ID + " INTEGER PRIMARY KEY AUTOINCREMENT,"
                 + RESERVATION_USER_EMAIL + " TEXT,"
@@ -160,21 +158,42 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         db.close();
         
         return cursorCount > 0;
+    }    // Check if user exists
+    public boolean checkUser(String email) {
+        return checkUserExists(email, null);
     }
     
-    // Check if user exists
-    public boolean checkUser(String email) {
-        SQLiteDatabase db = this.getReadableDatabase();
-        String[] columns = {KEY_ID};
-        String selection = KEY_EMAIL + " = ?";
-        String[] selectionArgs = {email};
+    public boolean checkUserExists(String email, SQLiteDatabase existingDb) {
+        SQLiteDatabase db = null;
+        Cursor cursor = null;
+        boolean shouldCloseDb = false;
         
-        Cursor cursor = db.query(TABLE_USERS, columns, selection, selectionArgs, null, null, null);
-        int cursorCount = cursor.getCount();
-        cursor.close();
-        db.close();
-        
-        return cursorCount > 0;
+        try {
+            if (existingDb != null) {
+                db = existingDb;
+                shouldCloseDb = false; // Don't close a database connection we didn't create
+            } else {
+                db = this.getReadableDatabase();
+                shouldCloseDb = true; // Close the database connection we created
+            }
+            
+            String[] columns = {KEY_ID};
+            String selection = KEY_EMAIL + " = ?";
+            String[] selectionArgs = {email};
+            
+            cursor = db.query(TABLE_USERS, columns, selection, selectionArgs, null, null, null);
+            return cursor.getCount() > 0;
+        } catch (Exception e) {
+            Log.e("DatabaseHelper", "Error checking user: " + e.getMessage());
+            return false;
+        } finally {
+            if (cursor != null) {
+                cursor.close();
+            }
+            if (shouldCloseDb && db != null) {
+                db.close();
+            }
+        }
     }
     
     // Get user by email
@@ -326,54 +345,135 @@ public class DatabaseHelper extends SQLiteOpenHelper {
                 properties.add(property);
             } while (cursor.moveToNext());
         }
-        
-        cursor.close();
+          cursor.close();
         db.close();
         return properties;
     }
-    
+
     // Favorites CRUD Operations
     public boolean addToFavorites(String userEmail, int propertyId) {
-        SQLiteDatabase db = this.getWritableDatabase();
-        
-        // Check if already in favorites
-        if (isPropertyInFavorites(userEmail, propertyId)) {
-            db.close();
-            return false; // Already in favorites
+        SQLiteDatabase db = null;
+        try {
+            Log.d("DatabaseHelper", "=== ADD TO FAVORITES DEBUG ===");
+            Log.d("DatabaseHelper", "Attempting to add favorite - Email: '" + userEmail + "', PropertyID: " + propertyId);
+            
+            // Validate inputs first
+            if (userEmail == null || userEmail.trim().isEmpty()) {
+                Log.e("DatabaseHelper", "Invalid user email for favorites: '" + userEmail + "'");
+                return false;
+            }
+            
+            if (propertyId <= 0) {
+                Log.e("DatabaseHelper", "Invalid property ID: " + propertyId);
+                return false;
+            }
+            
+            db = this.getWritableDatabase();
+            Log.d("DatabaseHelper", "Got writable database successfully");
+              // Check if already in favorites (reuse existing db connection)
+            boolean alreadyFavorite = isPropertyInFavorites(userEmail, propertyId, db);
+            Log.d("DatabaseHelper", "Already in favorites check: " + alreadyFavorite);
+            if (alreadyFavorite) {
+                Log.d("DatabaseHelper", "Property already in favorites");
+                return false; // Already in favorites
+            }            // Check if user exists in database (reuse existing db connection)
+            if (!checkUserExists(userEmail, db)) {
+                Log.e("DatabaseHelper", "User does not exist in database: " + userEmail);
+                return false;
+            }
+            Log.d("DatabaseHelper", "User exists in database: " + userEmail);
+            
+            ContentValues values = new ContentValues();
+            values.put(FAVORITE_USER_EMAIL, userEmail);
+            values.put(FAVORITE_PROPERTY_ID, propertyId);
+            values.put(FAVORITE_DATE_ADDED, System.currentTimeMillis() / 1000); // Unix timestamp
+            
+            Log.d("DatabaseHelper", "Prepared ContentValues: " + values.toString());
+            
+            long result = db.insert(TABLE_FAVORITES, null, values);
+            Log.d("DatabaseHelper", "Insert result: " + result);
+            
+            if (result != -1) {
+                Log.d("DatabaseHelper", "Successfully added to favorites");
+                return true;
+            } else {
+                Log.e("DatabaseHelper", "Failed to insert favorite - database insert returned -1");
+                
+                // Check table structure
+                Cursor cursor = db.rawQuery("PRAGMA table_info(" + TABLE_FAVORITES + ")", null);
+                StringBuilder tableInfo = new StringBuilder("Favorites table structure: ");
+                while (cursor.moveToNext()) {
+                    String columnName = cursor.getString(1);
+                    String columnType = cursor.getString(2);
+                    tableInfo.append(columnName).append("(").append(columnType).append(") ");
+                }
+                cursor.close();
+                Log.d("DatabaseHelper", tableInfo.toString());
+                
+                return false;
+            }
+        } catch (Exception e) {
+            Log.e("DatabaseHelper", "Error adding to favorites: " + e.getMessage(), e);
+            return false;
+        } finally {
+            if (db != null) {
+                db.close();
+            }
         }
-        
-        ContentValues values = new ContentValues();
-        values.put(FAVORITE_USER_EMAIL, userEmail);
-        values.put(FAVORITE_PROPERTY_ID, propertyId);
-        values.put(FAVORITE_DATE_ADDED, System.currentTimeMillis() / 1000); // Unix timestamp
-        
-        long result = db.insert(TABLE_FAVORITES, null, values);
-        db.close();
-        return result != -1;
+    }
+      public boolean removeFromFavorites(String userEmail, int propertyId) {
+        SQLiteDatabase db = null;
+        try {
+            db = this.getWritableDatabase();
+            
+            String selection = FAVORITE_USER_EMAIL + " = ? AND " + FAVORITE_PROPERTY_ID + " = ?";
+            String[] selectionArgs = {userEmail, String.valueOf(propertyId)};
+            
+            int result = db.delete(TABLE_FAVORITES, selection, selectionArgs);
+            return result > 0;
+        } catch (Exception e) {
+            Log.e("DatabaseHelper", "Error removing from favorites: " + e.getMessage());
+            return false;
+        } finally {
+            if (db != null) {
+                db.close();
+            }
+        }
+    }
+      public boolean isPropertyInFavorites(String userEmail, int propertyId) {
+        return isPropertyInFavorites(userEmail, propertyId, null);
     }
     
-    public boolean removeFromFavorites(String userEmail, int propertyId) {
-        SQLiteDatabase db = this.getWritableDatabase();
+    public boolean isPropertyInFavorites(String userEmail, int propertyId, SQLiteDatabase existingDb) {
+        SQLiteDatabase db = null;
+        Cursor cursor = null;
+        boolean shouldCloseDb = false;
         
-        String selection = FAVORITE_USER_EMAIL + " = ? AND " + FAVORITE_PROPERTY_ID + " = ?";
-        String[] selectionArgs = {userEmail, String.valueOf(propertyId)};
-        
-        int result = db.delete(TABLE_FAVORITES, selection, selectionArgs);
-        db.close();
-        return result > 0;
-    }
-    
-    public boolean isPropertyInFavorites(String userEmail, int propertyId) {
-        SQLiteDatabase db = this.getReadableDatabase();
-        
-        String selection = FAVORITE_USER_EMAIL + " = ? AND " + FAVORITE_PROPERTY_ID + " = ?";
-        String[] selectionArgs = {userEmail, String.valueOf(propertyId)};
-        
-        Cursor cursor = db.query(TABLE_FAVORITES, null, selection, selectionArgs, null, null, null);
-        boolean exists = cursor.getCount() > 0;
-        cursor.close();
-        db.close();
-        return exists;
+        try {
+            if (existingDb != null) {
+                db = existingDb;
+                shouldCloseDb = false; // Don't close a database connection we didn't create
+            } else {
+                db = this.getReadableDatabase();
+                shouldCloseDb = true; // Close the database connection we created
+            }
+            
+            String selection = FAVORITE_USER_EMAIL + " = ? AND " + FAVORITE_PROPERTY_ID + " = ?";
+            String[] selectionArgs = {userEmail, String.valueOf(propertyId)};
+            
+            cursor = db.query(TABLE_FAVORITES, null, selection, selectionArgs, null, null, null);
+            return cursor.getCount() > 0;
+        } catch (Exception e) {
+            Log.e("DatabaseHelper", "Error checking favorites: " + e.getMessage());
+            return false;
+        } finally {
+            if (cursor != null) {
+                cursor.close();
+            }
+            if (shouldCloseDb && db != null) {
+                db.close();
+            }
+        }
     }
     
     public List<Property> getFavoriteProperties(String userEmail) {
