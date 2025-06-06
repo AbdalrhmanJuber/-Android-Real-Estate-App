@@ -1,6 +1,7 @@
 package com.example.a1211769_courseproject;
 
 import android.content.Context;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -121,25 +122,28 @@ public class PropertyAdapter extends RecyclerView.Adapter<PropertyAdapter.Proper
             }
         }
         notifyDataSetChanged();
-    }
-
-    public void filterBySpecialOffers() {
+    }    public void filterBySpecialOffers() {
         propertiesFiltered.clear();
         for (Property property : properties) {
+            Log.d("PropertyAdapter", "Property: " + property.getTitle() + 
+                  ", hasSpecialOffer: " + property.hasSpecialOffer() + 
+                  ", isOfferValid: " + property.isOfferValid());
             if (property.hasSpecialOffer() && property.isOfferValid()) {
                 propertiesFiltered.add(property);
             }
         }
+        Log.d("PropertyAdapter", "Special offers filter: " + propertiesFiltered.size() + " properties found");
         notifyDataSetChanged();
-    }
-
-    public void filterByPromoted() {
+    }    public void filterByPromoted() {
         propertiesFiltered.clear();
         for (Property property : properties) {
+            Log.d("PropertyAdapter", "Property: " + property.getTitle() + 
+                  ", isPromoted: " + property.isPromoted());
             if (property.isPromoted()) {
                 propertiesFiltered.add(property);
             }
         }
+        Log.d("PropertyAdapter", "Promoted filter: " + propertiesFiltered.size() + " properties found");
         notifyDataSetChanged();
     }
 

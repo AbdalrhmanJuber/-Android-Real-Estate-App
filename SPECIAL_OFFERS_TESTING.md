@@ -93,13 +93,27 @@
    - Scroll through properties
    - Verify fade-in animation for property images
 
-## Sample Promotion Data
-The app includes sample promotion data for testing:
-- **Property 1**: Flash Sale - 15% discount, 1-week expiry
-- **Property 2**: Early Bird - 10% discount, 2-week expiry  
-- **Property 3**: Promoted (no special offer)
-- **Property 4**: Seasonal - 20% discount
-- **Property 5**: New Listing - 8% discount
+## Sample Promotion Data ✅ **NOW USING REAL CALCULATED OFFERS**
+The app now includes **REAL calculated promotion data** based on actual JSON API property prices:
+
+### Real Promotion Examples:
+- **High-Value Properties** (>$120K): Flash Sales with 15-21% discounts, 5-day expiry
+- **New Listings** (ID >115): Welcome offers with 8-12% discounts, 10-day expiry  
+- **Villas**: Seasonal offers with 12-18% discounts, 3-week expiry
+- **Apartments**: Early Bird specials with 10-16% discounts, 2-week expiry
+- **Land**: Investment opportunities with 6-14% discounts, 1-month expiry
+
+### Key Improvement:
+- ✅ **Real Discounts**: JSON price used as TRUE original price, discounted price calculated properly
+- ✅ **Smart Assignment**: Promotions based on property characteristics (price, type, ID) not hardcoded positions  
+- ✅ **Reservation Integration**: Discounted prices carry through to reservation system correctly
+- ✅ **Genuine Savings**: Users get actual savings, not fake inflated "original" prices
+
+### Sample Real Output:
+```
+Property: "Luxury Villa" - Original: $150,000, Discounted: $127,500, Savings: $22,500 (15%)
+Property: "Modern Apartment" - Original: $85,000, Discounted: $76,500, Savings: $8,500 (10%)
+```
 
 ## Technical Implementation Details
 

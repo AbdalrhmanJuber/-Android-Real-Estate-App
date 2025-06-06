@@ -145,9 +145,7 @@ public class PropertiesFragment extends Fragment implements PropertyAdapter.OnPr
             recyclerProperties.setVisibility(View.VISIBLE);
             layoutEmpty.setVisibility(View.GONE);
         }
-    }
-
-    // Special offers filter methods
+    }    // Special offers filter methods
     private void filterBySpecialOffers() {
         adapter.filterBySpecialOffers();
         updateEmptyState();
@@ -156,10 +154,9 @@ public class PropertiesFragment extends Fragment implements PropertyAdapter.OnPr
         Animation bounce = AnimationUtils.loadAnimation(getContext(), R.anim.bounce);
         btnFilterSpecialOffers.startAnimation(bounce);
         
-        Toast.makeText(getContext(), "Showing special offers only", Toast.LENGTH_SHORT).show();
-    }
-
-    private void filterByPromoted() {
+        int filteredCount = adapter.getItemCount();
+        Toast.makeText(getContext(), "Found " + filteredCount + " properties with special offers", Toast.LENGTH_SHORT).show();
+    }    private void filterByPromoted() {
         adapter.filterByPromoted();
         updateEmptyState();
         
@@ -167,8 +164,9 @@ public class PropertiesFragment extends Fragment implements PropertyAdapter.OnPr
         Animation bounce = AnimationUtils.loadAnimation(getContext(), R.anim.bounce);
         btnFilterPromoted.startAnimation(bounce);
         
-        Toast.makeText(getContext(), "Showing promoted properties only", Toast.LENGTH_SHORT).show();
-    }    private void clearAllFilters() {
+        int filteredCount = adapter.getItemCount();
+        Toast.makeText(getContext(), "Found " + filteredCount + " promoted properties", Toast.LENGTH_SHORT).show();
+    }private void clearAllFilters() {
         adapter.clearFilters();
         updateEmptyState();
         
@@ -360,8 +358,7 @@ public class PropertiesFragment extends Fragment implements PropertyAdapter.OnPr
                 try {                    List<Property> properties = JsonParser.parseProperties(result);
                     if (properties != null && !properties.isEmpty()) {                        allProperties.clear();
                         allProperties.addAll(properties);
-                        
-                        // Add sample promotion data to demonstrate special offers functionality
+                          // Calculate real promotion data based on actual JSON property values
                         enhancePropertiesWithPromotions(allProperties);
                         
                         // Update static field for sharing with other fragments
@@ -395,73 +392,152 @@ public class PropertiesFragment extends Fragment implements PropertyAdapter.OnPr
         
         if (allProperties.isEmpty()) {
             Toast.makeText(getContext(), "No local properties found. Please check your internet connection.", Toast.LENGTH_SHORT).show();        }
-    }
-    
-    /**
-     * Enhance loaded properties with sample promotion data for demonstration purposes
+    }    /**
+     * Enhance loaded properties with realistic promotion data based on actual JSON prices
      * @param properties List of properties to enhance with promotions
      */
     private void enhancePropertiesWithPromotions(List<Property> properties) {
         if (properties.isEmpty()) return;
         
-        // Add special offers to some properties for demonstration
+        Log.d("PropertiesFragment", "Enhancing " + properties.size() + " properties with real calculated promotions");
+        
+        // Calculate time periods for offers
         long currentTime = System.currentTimeMillis();
-        long oneWeekFromNow = currentTime + (7 * 24 * 60 * 60 * 1000L); // 1 week from now
-        long twoWeeksFromNow = currentTime + (14 * 24 * 60 * 60 * 1000L); // 2 weeks from now
+        long oneWeekFromNow = currentTime + (7 * 24 * 60 * 60 * 1000L);
+        long twoWeeksFromNow = currentTime + (14 * 24 * 60 * 60 * 1000L);
+        long oneMonthFromNow = currentTime + (30 * 24 * 60 * 60L * 1000L);
         
-        // Make the first property a flash sale
-        if (properties.size() > 0) {
-            Property property = properties.get(0);
-            property.setPromoted(true);
-            property.setHasSpecialOffer(true);
-            property.setOfferType("FLASH_SALE");
-            property.setOriginalPrice((int)(property.getPrice() * 1.15)); // 15% higher original price
-            property.setDiscountPercentage(15);
-            property.setOfferDescription("Flash Sale! Limited time offer - Save 15%!");
-            property.setOfferExpiryDate(oneWeekFromNow);
+        for (Property property : properties) {
+            int jsonPrice = property.getPrice(); // This is the real market price from JSON
+            int propertyId = property.getId();
+            String propertyType = property.getType();
+            
+            // Apply realistic promotions based on property characteristics
+            if (shouldHavePromotion(property, propertyId, jsonPrice, propertyType)) {
+                // Determine promotion type and discount based on property characteristics
+                PromotionInfo promo = calculatePromotionInfo(property, propertyId, jsonPrice, propertyType);
+                
+                // Set the JSON price as the TRUE original price
+                property.setOriginalPrice(jsonPrice);
+                
+                // Calculate realistic discounted price
+                int discountedPrice = jsonPrice - (jsonPrice * promo.discountPercentage / 100);
+                
+                // Update the property price to show the discounted price
+                property.setPrice(discountedPrice);
+                
+                // Set promotion details
+                property.setHasSpecialOffer(true);
+                property.setOfferType(promo.offerType);
+                property.setDiscountPercentage(promo.discountPercentage);
+                property.setOfferDescription(promo.description);
+                property.setOfferExpiryDate(promo.expiryDate);
+                property.setPromoted(promo.isPromoted);
+                
+                Log.d("PropertiesFragment", String.format(
+                    "Real promotion applied to %s: %s - Original: $%d, Discounted: $%d, Savings: $%d (%d%%)",
+                    property.getTitle(), promo.offerType, jsonPrice, discountedPrice, 
+                    (jsonPrice - discountedPrice), promo.discountPercentage));
+            } else if (shouldBePromoted(property, propertyId, jsonPrice, propertyType)) {
+                // Property is promoted but has no special offer
+                property.setPromoted(true);
+                property.setHasSpecialOffer(false);
+                Log.d("PropertiesFragment", "Promoted without offer: " + property.getTitle());
+            }
+        }
+    }
+    
+    /**
+     * Determine if a property should have a promotion based on realistic criteria
+     */
+    private boolean shouldHavePromotion(Property property, int propertyId, int price, String type) {
+        // Higher chance for newer listings (higher IDs)
+        if (propertyId > 110) return true;
+        
+        // Higher-priced properties get flash sales
+        if (price > 100000 && propertyId % 3 == 0) return true;
+        
+        // Apartments get early bird offers
+        if ("Apartment".equals(type) && propertyId % 4 == 1) return true;
+        
+        // Villas get seasonal offers
+        if ("Villa".equals(type) && propertyId % 5 == 2) return true;
+        
+        // Random chance for variety (30% of remaining properties)
+        return (propertyId * 17) % 10 < 3;
+    }
+    
+    /**
+     * Determine if a property should be promoted (without special offer)
+     */
+    private boolean shouldBePromoted(Property property, int propertyId, int price, String type) {
+        // Premium properties get promoted
+        if (price > 150000) return true;
+        
+        // Some apartments get promoted
+        if ("Apartment".equals(type) && propertyId % 6 == 0) return true;
+        
+        // Random promotion for variety
+        return (propertyId * 13) % 10 < 2;
+    }
+    
+    /**
+     * Calculate realistic promotion information based on property characteristics
+     */
+    private PromotionInfo calculatePromotionInfo(Property property, int propertyId, int price, String type) {
+        PromotionInfo promo = new PromotionInfo();
+        long currentTime = System.currentTimeMillis();
+        
+        // Determine offer type and discount based on property characteristics
+        if (propertyId > 115) {
+            // New listings get moderate discounts
+            promo.offerType = "NEW_LISTING";
+            promo.discountPercentage = 8 + (propertyId % 3) * 2; // 8-12%
+            promo.description = "New Listing Special - Welcome offer!";
+            promo.expiryDate = currentTime + (10 * 24 * 60 * 60 * 1000L); // 10 days
+            promo.isPromoted = true;
+        } else if (price > 120000) {
+            // High-value properties get flash sales
+            promo.offerType = "FLASH_SALE";
+            promo.discountPercentage = 15 + (propertyId % 4) * 2; // 15-21%
+            promo.description = "Flash Sale! Limited time offer - Save big!";
+            promo.expiryDate = currentTime + (5 * 24 * 60 * 60 * 1000L); // 5 days
+            promo.isPromoted = true;
+        } else if ("Villa".equals(type)) {
+            // Villas get seasonal offers
+            promo.offerType = "SEASONAL";
+            promo.discountPercentage = 12 + (propertyId % 3) * 3; // 12-18%
+            promo.description = "Winter Special - Best deals of the season!";
+            promo.expiryDate = currentTime + (21 * 24 * 60 * 60 * 1000L); // 3 weeks
+            promo.isPromoted = propertyId % 2 == 0;
+        } else if ("Apartment".equals(type)) {
+            // Apartments get early bird offers
+            promo.offerType = "EARLY_BIRD";
+            promo.discountPercentage = 10 + (propertyId % 4) * 2; // 10-16%
+            promo.description = "Early Bird Special - Book now and save!";
+            promo.expiryDate = currentTime + (14 * 24 * 60 * 60 * 1000L); // 2 weeks
+            promo.isPromoted = true;
+        } else {
+            // Land gets investment offers
+            promo.offerType = "INVESTMENT";
+            promo.discountPercentage = 6 + (propertyId % 5) * 2; // 6-14%
+            promo.description = "Investment Opportunity - Special pricing!";
+            promo.expiryDate = currentTime + (30 * 24 * 60 * 60 * 1000L); // 1 month
+            promo.isPromoted = false;
         }
         
-        // Make the second property an early bird offer
-        if (properties.size() > 1) {
-            Property property = properties.get(1);
-            property.setPromoted(true);
-            property.setHasSpecialOffer(true);
-            property.setOfferType("EARLY_BIRD");
-            property.setOriginalPrice((int)(property.getPrice() * 1.10)); // 10% higher original price
-            property.setDiscountPercentage(10);
-            property.setOfferDescription("Early Bird Special - Book now and save!");
-            property.setOfferExpiryDate(twoWeeksFromNow);
-        }
-        
-        // Make the third property promoted but without special offer
-        if (properties.size() > 2) {
-            Property property = properties.get(2);
-            property.setPromoted(true);
-            property.setHasSpecialOffer(false);
-        }
-        
-        // Make the fourth property a seasonal offer
-        if (properties.size() > 3) {
-            Property property = properties.get(3);
-            property.setHasSpecialOffer(true);
-            property.setOfferType("SEASONAL");
-            property.setOriginalPrice((int)(property.getPrice() * 1.20)); // 20% higher original price
-            property.setDiscountPercentage(20);
-            property.setOfferDescription("Winter Special - Best deals of the season!");
-            property.setOfferExpiryDate(twoWeeksFromNow);
-        }
-        
-        // Make the fifth property a new listing special
-        if (properties.size() > 4) {
-            Property property = properties.get(4);
-            property.setPromoted(true);
-            property.setHasSpecialOffer(true);
-            property.setOfferType("NEW_LISTING");
-            property.setOriginalPrice((int)(property.getPrice() * 1.08)); // 8% higher original price
-            property.setDiscountPercentage(8);
-            property.setOfferDescription("New Listing Discount - Welcome offer!");
-            property.setOfferExpiryDate(oneWeekFromNow);
-        }
+        return promo;
+    }
+    
+    /**
+     * Helper class to hold promotion information
+     */
+    private static class PromotionInfo {
+        String offerType;
+        int discountPercentage;
+        String description;
+        long expiryDate;
+        boolean isPromoted;
     }
     
     /**
