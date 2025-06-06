@@ -718,4 +718,146 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         
         return property;
     }
+    
+    // Profile Management Methods
+    
+    /**
+     * Update user profile information (excluding password)
+     */
+    public boolean updateUserProfile(String email, String firstName, String lastName, String phoneNumber) {
+        SQLiteDatabase db = null;
+        try {
+            db = this.getWritableDatabase();
+            ContentValues values = new ContentValues();
+            values.put(KEY_FIRST_NAME, firstName);
+            values.put(KEY_LAST_NAME, lastName);
+            values.put(KEY_PHONE, phoneNumber);
+            
+            String whereClause = KEY_EMAIL + " = ?";
+            String[] whereArgs = {email};
+            
+            int rowsAffected = db.update(TABLE_USERS, values, whereClause, whereArgs);
+            Log.d("DatabaseHelper", "Profile update - rows affected: " + rowsAffected);
+            return rowsAffected > 0;
+        } catch (Exception e) {
+            Log.e("DatabaseHelper", "Error updating user profile: " + e.getMessage());
+            return false;
+        } finally {
+            if (db != null) {
+                db.close();
+            }
+        }
+    }
+    
+    /**
+     * Update user password after validating current password
+     */
+    public boolean updateUserPassword(String email, String currentPassword, String newPassword) {
+        SQLiteDatabase db = null;
+        try {
+            // First verify current password
+            if (!checkUser(email, currentPassword)) {
+                Log.w("DatabaseHelper", "Current password verification failed for user: " + email);
+                return false;
+            }
+            
+            db = this.getWritableDatabase();
+            ContentValues values = new ContentValues();
+            values.put(KEY_PASSWORD, newPassword);
+            
+            String whereClause = KEY_EMAIL + " = ?";
+            String[] whereArgs = {email};
+            
+            int rowsAffected = db.update(TABLE_USERS, values, whereClause, whereArgs);
+            Log.d("DatabaseHelper", "Password update - rows affected: " + rowsAffected);
+            return rowsAffected > 0;
+        } catch (Exception e) {
+            Log.e("DatabaseHelper", "Error updating user password: " + e.getMessage());
+            return false;
+        } finally {
+            if (db != null) {
+                db.close();
+            }
+        }
+    }
+    
+    /**
+     * Add profile picture path column if not exists (for future enhancement)
+     */
+    private void addProfilePictureColumn(SQLiteDatabase db) {
+        try {
+            db.execSQL("ALTER TABLE " + TABLE_USERS + " ADD COLUMN profile_picture_path TEXT");
+        } catch (Exception e) {
+            // Column might already exist, ignore
+            Log.d("DatabaseHelper", "Profile picture column might already exist");
+        }
+    }
+    
+    /**
+     * Update user profile picture path
+     */
+    public boolean updateUserProfilePicture(String email, String profilePicturePath) {
+        SQLiteDatabase db = null;
+        try {
+            db = this.getWritableDatabase();
+            
+            // Ensure profile picture column exists
+            addProfilePictureColumn(db);
+            
+            ContentValues values = new ContentValues();
+            values.put("profile_picture_path", profilePicturePath);
+            
+            String whereClause = KEY_EMAIL + " = ?";
+            String[] whereArgs = {email};
+            
+            int rowsAffected = db.update(TABLE_USERS, values, whereClause, whereArgs);
+            Log.d("DatabaseHelper", "Profile picture update - rows affected: " + rowsAffected);
+            return rowsAffected > 0;
+        } catch (Exception e) {
+            Log.e("DatabaseHelper", "Error updating profile picture: " + e.getMessage());
+            return false;
+        } finally {
+            if (db != null) {
+                db.close();
+            }
+        }
+    }
+    
+    /**
+     * Get user profile picture path
+     */
+    public String getUserProfilePicture(String email) {
+        SQLiteDatabase db = null;
+        Cursor cursor = null;
+        try {
+            db = this.getReadableDatabase();
+            
+            // Ensure profile picture column exists
+            addProfilePictureColumn(db);
+            
+            String[] columns = {"profile_picture_path"};
+            String selection = KEY_EMAIL + " = ?";
+            String[] selectionArgs = {email};
+            
+            cursor = db.query(TABLE_USERS, columns, selection, selectionArgs, null, null, null);
+            
+            if (cursor.moveToFirst()) {
+                int columnIndex = cursor.getColumnIndex("profile_picture_path");
+                if (columnIndex != -1) {
+                    return cursor.getString(columnIndex);
+                }
+            }
+            return null;
+        } catch (Exception e) {
+            Log.e("DatabaseHelper", "Error getting profile picture: " + e.getMessage());
+            return null;
+        } finally {
+            if (cursor != null) {
+                cursor.close();
+            }
+            if (db != null) {
+                db.close();
+            }
+        }
+    }
 }
