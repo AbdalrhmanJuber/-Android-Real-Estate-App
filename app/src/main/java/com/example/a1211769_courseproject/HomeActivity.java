@@ -20,32 +20,50 @@ import androidx.fragment.app.FragmentTransaction;
 
 import com.google.android.material.navigation.NavigationView;
 
-public class HomeActivity extends AppCompatActivity implements NavigationView.OnNavigationItemSelectedListener {
-
-    private DrawerLayout drawerLayout;
+public class HomeActivity extends AppCompatActivity implements NavigationView.OnNavigationItemSelectedListener {    private DrawerLayout drawerLayout;
     private NavigationView navigationView;
     private Toolbar toolbar;
     private String userEmail;
     private String jsonData;
+    private DatabaseHelper databaseHelper;
+    private boolean isAdmin = false;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_home);
-
-        // Get user data from intent
+        setContentView(R.layout.activity_home);        // Get user data from intent
         userEmail = getIntent().getStringExtra("userEmail");
         jsonData = getIntent().getStringExtra("jsonData");
+
+        // Initialize database helper
+        databaseHelper = new DatabaseHelper(this);
+        
+        // Check if user is admin
+        checkUserRole();
 
         initializeViews();
         setupToolbar();
         setupNavigationDrawer();
         setupNavigationHeader();
 
-        // Load default fragment (Home/About Us)
+        // Load default fragment based on user role
         if (savedInstanceState == null) {
-            loadFragment(new HomeFragment());
-            navigationView.setCheckedItem(R.id.nav_home);
+            if (isAdmin) {
+                loadFragment(new AdminDashboardFragment());
+                navigationView.setCheckedItem(R.id.nav_admin_dashboard);
+            } else {
+                loadFragment(new HomeFragment());
+                navigationView.setCheckedItem(R.id.nav_home);
+            }
+        }
+    }
+
+    private void checkUserRole() {
+        if (userEmail != null && !userEmail.isEmpty()) {
+            User user = databaseHelper.getUserByEmail(userEmail);
+            if (user != null && user.isAdmin()) {
+                isAdmin = true;
+            }
         }
     }
 
@@ -59,7 +77,7 @@ public class HomeActivity extends AppCompatActivity implements NavigationView.On
         setSupportActionBar(toolbar);
         if (getSupportActionBar() != null) {
             getSupportActionBar().setDisplayHomeAsUpEnabled(true);
-            getSupportActionBar().setTitle("Real Estate App");
+            getSupportActionBar().setTitle(isAdmin ? "Admin Panel" : "Real Estate App");
         }
     }
 
@@ -71,6 +89,15 @@ public class HomeActivity extends AppCompatActivity implements NavigationView.On
         );
         drawerLayout.addDrawerListener(toggle);
         toggle.syncState();
+
+        // Set appropriate menu based on user role
+        if (isAdmin) {
+            navigationView.getMenu().clear();
+            navigationView.inflateMenu(R.menu.nav_menu_admin);
+        } else {
+            navigationView.getMenu().clear();
+            navigationView.inflateMenu(R.menu.nav_menu);
+        }
 
         navigationView.setNavigationItemSelectedListener(this);
     }
@@ -89,33 +116,59 @@ public class HomeActivity extends AppCompatActivity implements NavigationView.On
     @Override
     public boolean onNavigationItemSelected(@NonNull MenuItem item) {
         Fragment fragment = null;
-        String title = "Real Estate App";
-
-        int itemId = item.getItemId();
-        if (itemId == R.id.nav_home) {
-            fragment = new HomeFragment();
-            title = "Home";
-        } else if (itemId == R.id.nav_properties) {
-            fragment = new PropertiesFragment();
-            title = "Properties";
-        } else if (itemId == R.id.nav_reservations) {
-            fragment = new ReservationsFragment();
-            title = "Your Reservations";
-        } else if (itemId == R.id.nav_favorites) {
-            fragment = new FavoritesFragment();
-            title = "Your Favorites";
-        } else if (itemId == R.id.nav_featured) {
-            fragment = new FeaturedPropertiesFragment();
-            title = "Featured Properties";
-        } else if (itemId == R.id.nav_profile) {
-            fragment = new ProfileFragment();
-            title = "Profile Management";
-        } else if (itemId == R.id.nav_contact) {
-            fragment = new ContactFragment();
-            title = "Contact Us";
-        } else if (itemId == R.id.nav_logout) {
-            logout();
-            return true;
+        String title = "Real Estate App";        int itemId = item.getItemId();
+        
+        // Handle admin menu items
+        if (isAdmin) {
+            if (itemId == R.id.nav_admin_dashboard) {
+                fragment = new AdminDashboardFragment();
+                title = "Admin Dashboard";
+            } else if (itemId == R.id.nav_admin_delete_customers) {
+                fragment = new AdminDeleteCustomersFragment();
+                title = "Delete Customers";
+            } else if (itemId == R.id.nav_admin_all_reservations) {
+                fragment = new AdminAllReservationsFragment();
+                title = "All Reservations";
+            } else if (itemId == R.id.nav_admin_manage_offers) {
+                fragment = new AdminManageOffersFragment();
+                title = "Manage Special Offers";
+            } else if (itemId == R.id.nav_admin_add_admin) {
+                fragment = new AdminAddAdminFragment();
+                title = "Add New Admin";
+            } else if (itemId == R.id.nav_admin_properties) {
+                fragment = new PropertiesFragment();
+                title = "Properties";
+            } else if (itemId == R.id.nav_logout) {
+                logout();
+                return true;
+            }
+        } else {
+            // Handle regular user menu items
+            if (itemId == R.id.nav_home) {
+                fragment = new HomeFragment();
+                title = "Home";
+            } else if (itemId == R.id.nav_properties) {
+                fragment = new PropertiesFragment();
+                title = "Properties";
+            } else if (itemId == R.id.nav_reservations) {
+                fragment = new ReservationsFragment();
+                title = "Your Reservations";
+            } else if (itemId == R.id.nav_favorites) {
+                fragment = new FavoritesFragment();
+                title = "Your Favorites";
+            } else if (itemId == R.id.nav_featured) {
+                fragment = new FeaturedPropertiesFragment();
+                title = "Featured Properties";
+            } else if (itemId == R.id.nav_profile) {
+                fragment = new ProfileFragment();
+                title = "Profile Management";
+            } else if (itemId == R.id.nav_contact) {
+                fragment = new ContactFragment();
+                title = "Contact Us";
+            } else if (itemId == R.id.nav_logout) {
+                logout();
+                return true;
+            }
         }
 
         if (fragment != null) {

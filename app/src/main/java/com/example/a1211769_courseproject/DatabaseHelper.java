@@ -11,15 +11,14 @@ import java.util.List;
 
 public class DatabaseHelper extends SQLiteOpenHelper {
     private static final String DATABASE_NAME = "CourseProject.db";
-    private static final int DATABASE_VERSION = 5; // Incremented to add promotion fields
+    private static final int DATABASE_VERSION = 6; // Incremented to add role field
     
     // Table names
     private static final String TABLE_USERS = "users";
     private static final String TABLE_PROPERTIES = "properties";
     private static final String TABLE_FAVORITES = "favorites";
     private static final String TABLE_RESERVATIONS = "reservations";
-    
-    // User table columns
+      // User table columns
     private static final String KEY_ID = "id";
     private static final String KEY_EMAIL = "email";
     private static final String KEY_FIRST_NAME = "first_name";
@@ -29,6 +28,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
     private static final String KEY_COUNTRY = "country";
     private static final String KEY_CITY = "city";
     private static final String KEY_PHONE = "phone_number";
+    private static final String KEY_ROLE = "role";
       // Property table columns
     private static final String PROPERTY_ID = "property_id";
     private static final String PROPERTY_TITLE = "title";
@@ -70,8 +70,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         super(context, DATABASE_NAME, null, DATABASE_VERSION);
     }
       @Override
-    public void onCreate(SQLiteDatabase db) {
-        // Create users table
+    public void onCreate(SQLiteDatabase db) {        // Create users table
         String CREATE_USERS_TABLE = "CREATE TABLE " + TABLE_USERS + "("
                 + KEY_ID + " INTEGER PRIMARY KEY AUTOINCREMENT,"
                 + KEY_EMAIL + " TEXT UNIQUE,"
@@ -81,7 +80,8 @@ public class DatabaseHelper extends SQLiteOpenHelper {
                 + KEY_GENDER + " TEXT,"
                 + KEY_COUNTRY + " TEXT,"
                 + KEY_CITY + " TEXT,"
-                + KEY_PHONE + " TEXT" + ")";
+                + KEY_PHONE + " TEXT,"
+                + KEY_ROLE + " TEXT DEFAULT 'USER'" + ")";
         db.execSQL(CREATE_USERS_TABLE);
           // Create properties table
         String CREATE_PROPERTIES_TABLE = "CREATE TABLE " + TABLE_PROPERTIES + "("
@@ -125,10 +125,27 @@ public class DatabaseHelper extends SQLiteOpenHelper {
                 + "property_price INTEGER,"
                 + "property_type TEXT,"
                 + "property_image_url TEXT,"
-                + "FOREIGN KEY(" + RESERVATION_USER_EMAIL + ") REFERENCES " + TABLE_USERS + "(" + KEY_EMAIL + ")" + ")";
-        db.execSQL(CREATE_RESERVATIONS_TABLE);
+                + "FOREIGN KEY(" + RESERVATION_USER_EMAIL + ") REFERENCES " + TABLE_USERS + "(" + KEY_EMAIL + ")" + ")";        db.execSQL(CREATE_RESERVATIONS_TABLE);
+          // Create pre-defined admin user
+        createDefaultAdmin(db);
         
         // Note: Properties are now loaded from API, not inserted locally
+    }
+    
+    // Create default admin user
+    private void createDefaultAdmin(SQLiteDatabase db) {
+        ContentValues adminValues = new ContentValues();
+        adminValues.put(KEY_EMAIL, "admin@admin.com");
+        adminValues.put(KEY_FIRST_NAME, "Admin");
+        adminValues.put(KEY_LAST_NAME, "User");
+        adminValues.put(KEY_PASSWORD, "Admin123!");
+        adminValues.put(KEY_GENDER, "Other");
+        adminValues.put(KEY_COUNTRY, "System");
+        adminValues.put(KEY_CITY, "System");
+        adminValues.put(KEY_PHONE, "000-000-0000");
+        adminValues.put(KEY_ROLE, "ADMIN");
+        
+        db.insert(TABLE_USERS, null, adminValues);
     }
     
     @Override
@@ -139,8 +156,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         db.execSQL("DROP TABLE IF EXISTS " + TABLE_USERS);
         onCreate(db);
     }
-    
-    // Add user
+      // Add user
     public long addUser(User user) {
         SQLiteDatabase db = this.getWritableDatabase();
         ContentValues values = new ContentValues();
@@ -153,6 +169,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         values.put(KEY_COUNTRY, user.getCountry());
         values.put(KEY_CITY, user.getCity());
         values.put(KEY_PHONE, user.getPhoneNumber());
+        values.put(KEY_ROLE, user.getRole() != null ? user.getRole() : "USER");
         
         long id = db.insert(TABLE_USERS, null, values);
         db.close();
@@ -209,12 +226,11 @@ public class DatabaseHelper extends SQLiteOpenHelper {
             }
         }
     }
-    
-    // Get user by email
+      // Get user by email
     public User getUserByEmail(String email) {
         SQLiteDatabase db = this.getReadableDatabase();
         String[] columns = {KEY_ID, KEY_EMAIL, KEY_FIRST_NAME, KEY_LAST_NAME, 
-                           KEY_GENDER, KEY_COUNTRY, KEY_CITY, KEY_PHONE};
+                           KEY_GENDER, KEY_COUNTRY, KEY_CITY, KEY_PHONE, KEY_ROLE};
         String selection = KEY_EMAIL + " = ?";
         String[] selectionArgs = {email};
         
@@ -231,11 +247,211 @@ public class DatabaseHelper extends SQLiteOpenHelper {
             user.setCountry(cursor.getString(cursor.getColumnIndexOrThrow(KEY_COUNTRY)));
             user.setCity(cursor.getString(cursor.getColumnIndexOrThrow(KEY_CITY)));
             user.setPhoneNumber(cursor.getString(cursor.getColumnIndexOrThrow(KEY_PHONE)));
+            user.setRole(cursor.getString(cursor.getColumnIndexOrThrow(KEY_ROLE)));
+        }
+          cursor.close();
+        db.close();
+        return user;
+    }
+
+    // ===== ADMIN METHODS =====
+    
+    // Get all users (for admin)
+    public List<User> getAllUsers() {
+        List<User> users = new ArrayList<>();
+        SQLiteDatabase db = this.getReadableDatabase();
+        
+        String[] columns = {KEY_ID, KEY_EMAIL, KEY_FIRST_NAME, KEY_LAST_NAME, 
+                           KEY_GENDER, KEY_COUNTRY, KEY_CITY, KEY_PHONE, KEY_ROLE};
+        
+        Cursor cursor = db.query(TABLE_USERS, columns, null, null, null, null, KEY_EMAIL);
+        
+        if (cursor.moveToFirst()) {
+            do {
+                User user = new User();
+                user.setId(cursor.getInt(cursor.getColumnIndexOrThrow(KEY_ID)));
+                user.setEmail(cursor.getString(cursor.getColumnIndexOrThrow(KEY_EMAIL)));
+                user.setFirstName(cursor.getString(cursor.getColumnIndexOrThrow(KEY_FIRST_NAME)));
+                user.setLastName(cursor.getString(cursor.getColumnIndexOrThrow(KEY_LAST_NAME)));
+                user.setGender(cursor.getString(cursor.getColumnIndexOrThrow(KEY_GENDER)));
+                user.setCountry(cursor.getString(cursor.getColumnIndexOrThrow(KEY_COUNTRY)));
+                user.setCity(cursor.getString(cursor.getColumnIndexOrThrow(KEY_CITY)));
+                user.setPhoneNumber(cursor.getString(cursor.getColumnIndexOrThrow(KEY_PHONE)));
+                user.setRole(cursor.getString(cursor.getColumnIndexOrThrow(KEY_ROLE)));
+                users.add(user);
+            } while (cursor.moveToNext());
         }
         
         cursor.close();
         db.close();
-        return user;
+        return users;
+    }
+    
+    // Delete user (for admin)
+    public boolean deleteUser(String email) {
+        if ("admin@admin.com".equals(email)) {
+            return false; // Cannot delete admin user
+        }
+        
+        SQLiteDatabase db = this.getWritableDatabase();
+        
+        try {
+            // Delete user's reservations first
+            db.delete(TABLE_RESERVATIONS, RESERVATION_USER_EMAIL + " = ?", new String[]{email});
+            
+            // Delete user's favorites
+            db.delete(TABLE_FAVORITES, FAVORITE_USER_EMAIL + " = ?", new String[]{email});
+            
+            // Delete user
+            int result = db.delete(TABLE_USERS, KEY_EMAIL + " = ?", new String[]{email});
+            
+            return result > 0;
+        } catch (Exception e) {
+            Log.e("DatabaseHelper", "Error deleting user: " + e.getMessage());
+            return false;
+        } finally {
+            db.close();
+        }
+    }
+    
+    // Get statistics (for admin dashboard)
+    public AdminStats getAdminStats() {
+        SQLiteDatabase db = this.getReadableDatabase();
+        AdminStats stats = new AdminStats();
+        
+        try {
+            // Count total users (excluding admin)
+            Cursor userCursor = db.rawQuery("SELECT COUNT(*) FROM " + TABLE_USERS + 
+                " WHERE " + KEY_ROLE + " = 'USER'", null);
+            if (userCursor.moveToFirst()) {
+                stats.totalUsers = userCursor.getInt(0);
+            }
+            userCursor.close();
+            
+            // Count total reservations
+            Cursor reservationCursor = db.rawQuery("SELECT COUNT(*) FROM " + TABLE_RESERVATIONS, null);
+            if (reservationCursor.moveToFirst()) {
+                stats.totalReservations = reservationCursor.getInt(0);
+            }
+            reservationCursor.close();
+            
+            // Get gender statistics
+            Cursor genderCursor = db.rawQuery("SELECT " + KEY_GENDER + ", COUNT(*) FROM " + TABLE_USERS + 
+                " WHERE " + KEY_ROLE + " = 'USER' GROUP BY " + KEY_GENDER, null);
+            while (genderCursor.moveToNext()) {
+                String gender = genderCursor.getString(0);
+                int count = genderCursor.getInt(1);
+                if ("Male".equals(gender)) {
+                    stats.maleUsers = count;
+                } else if ("Female".equals(gender)) {
+                    stats.femaleUsers = count;
+                }
+            }
+            genderCursor.close();
+            
+            // Get most reserving countries
+            Cursor countryCursor = db.rawQuery("SELECT u." + KEY_COUNTRY + ", COUNT(r." + RESERVATION_ID + ") as reservation_count " +
+                "FROM " + TABLE_USERS + " u " +
+                "LEFT JOIN " + TABLE_RESERVATIONS + " r ON u." + KEY_EMAIL + " = r." + RESERVATION_USER_EMAIL + " " +
+                "WHERE u." + KEY_ROLE + " = 'USER' " +
+                "GROUP BY u." + KEY_COUNTRY + " " +
+                "ORDER BY reservation_count DESC " +
+                "LIMIT 5", null);
+            
+            while (countryCursor.moveToNext()) {
+                String country = countryCursor.getString(0);
+                int count = countryCursor.getInt(1);
+                stats.topCountries.add(new AdminStats.CountryStats(country, count));
+            }
+            countryCursor.close();
+            
+        } catch (Exception e) {
+            Log.e("DatabaseHelper", "Error getting admin stats: " + e.getMessage());
+        } finally {
+            db.close();
+        }
+        
+        return stats;
+    }
+    
+    // Get all reservations (for admin)
+    public List<Reservation> getAllReservations() {
+        List<Reservation> reservations = new ArrayList<>();
+        SQLiteDatabase db = this.getReadableDatabase();
+        
+        String query = "SELECT r.*, u." + KEY_FIRST_NAME + ", u." + KEY_LAST_NAME + " " +
+                      "FROM " + TABLE_RESERVATIONS + " r " +
+                      "JOIN " + TABLE_USERS + " u ON r." + RESERVATION_USER_EMAIL + " = u." + KEY_EMAIL + " " +
+                      "ORDER BY r." + RESERVATION_DATE + " DESC";
+        
+        Cursor cursor = db.rawQuery(query, null);
+        
+        if (cursor.moveToFirst()) {
+            do {
+                Reservation reservation = new Reservation();
+                reservation.setReservationId(cursor.getInt(cursor.getColumnIndexOrThrow(RESERVATION_ID)));
+                reservation.setUserEmail(cursor.getString(cursor.getColumnIndexOrThrow(RESERVATION_USER_EMAIL)));
+                reservation.setPropertyId(cursor.getInt(cursor.getColumnIndexOrThrow(RESERVATION_PROPERTY_ID)));
+                reservation.setReservationDate(cursor.getString(cursor.getColumnIndexOrThrow(RESERVATION_DATE)));
+                reservation.setCheckInDate(cursor.getString(cursor.getColumnIndexOrThrow(RESERVATION_CHECK_IN)));
+                reservation.setCheckOutDate(cursor.getString(cursor.getColumnIndexOrThrow(RESERVATION_CHECK_OUT)));
+                reservation.setStatus(cursor.getString(cursor.getColumnIndexOrThrow(RESERVATION_STATUS)));
+                reservation.setNotes(cursor.getString(cursor.getColumnIndexOrThrow(RESERVATION_NOTES)));
+                
+                // Property details
+                reservation.setPropertyTitle(cursor.getString(cursor.getColumnIndexOrThrow("property_title")));
+                reservation.setPropertyLocation(cursor.getString(cursor.getColumnIndexOrThrow("property_location")));
+                reservation.setPropertyPrice(cursor.getInt(cursor.getColumnIndexOrThrow("property_price")));
+                reservation.setPropertyType(cursor.getString(cursor.getColumnIndexOrThrow("property_type")));
+                reservation.setPropertyImageUrl(cursor.getString(cursor.getColumnIndexOrThrow("property_image_url")));
+                
+                // Customer name
+                String customerName = cursor.getString(cursor.getColumnIndexOrThrow(KEY_FIRST_NAME)) + " " +
+                                     cursor.getString(cursor.getColumnIndexOrThrow(KEY_LAST_NAME));
+                reservation.setCustomerName(customerName);
+                
+                reservations.add(reservation);
+            } while (cursor.moveToNext());
+        }
+        
+        cursor.close();
+        db.close();
+        return reservations;
+    }
+    
+    // Set property as promoted (for admin)
+    public boolean setPropertyPromoted(int propertyId, boolean isPromoted) {
+        SQLiteDatabase db = this.getWritableDatabase();
+        ContentValues values = new ContentValues();
+        values.put(PROPERTY_IS_PROMOTED, isPromoted ? 1 : 0);
+        
+        int result = db.update(TABLE_PROPERTIES, values, PROPERTY_ID + " = ?", 
+                              new String[]{String.valueOf(propertyId)});
+        db.close();
+        return result > 0;
+    }
+
+    // Simplified updatePropertySpecialOffer for admin interface
+    public boolean updatePropertySpecialOffer(int propertyId, String offerDescription) {
+        SQLiteDatabase db = this.getWritableDatabase();
+        ContentValues values = new ContentValues();
+        
+        if (offerDescription != null && !offerDescription.trim().isEmpty()) {
+            // Add/update offer
+            values.put(PROPERTY_HAS_SPECIAL_OFFER, 1);
+            values.put(PROPERTY_OFFER_DESCRIPTION, offerDescription.trim());
+            values.put(PROPERTY_OFFER_TYPE, "ADMIN_SPECIAL");
+        } else {
+            // Remove offer
+            values.put(PROPERTY_HAS_SPECIAL_OFFER, 0);
+            values.put(PROPERTY_OFFER_DESCRIPTION, "");
+            values.put(PROPERTY_OFFER_TYPE, "");
+        }
+        
+        int result = db.update(TABLE_PROPERTIES, values, PROPERTY_ID + " = ?", 
+                              new String[]{String.valueOf(propertyId)});
+        db.close();
+        return result > 0;
     }
   
     

@@ -79,4 +79,73 @@
     <string name="enter_special_requests">Any special requests or questions?</string>
     <string name="cancel">Cancel</string>
     <string name="confirm_reservation">Confirm Reservation</string>
+    
+    <!-- Admin Navigation Menu Items -->
+    <string name="nav_admin_dashboard">Admin Dashboard</string>
+    <string name="nav_admin_delete_customers">Delete Customers</string>
+    <string name="nav_admin_all_reservations">All Reservations</string>
+    <string name="nav_admin_manage_offers">Manage Special Offers</string>
+    <string name="nav_admin_add_admin">Add New Admin</string>
+    
+    <!-- Admin Dashboard -->
+    <string name="admin_dashboard_title">Admin Dashboard</string>
+    <string name="admin_stats_title">System Statistics</string>
+    <string name="admin_total_users">Total Users</string>
+    <string name="admin_total_reservations">Total Reservations</string>
+    <string name="admin_gender_stats">Gender Distribution</string>
+    <string name="admin_top_countries">Top Reserving Countries</string>
+    
+    <!-- Admin Actions -->
+    <string name="admin_delete_customer">Delete Customer</string>
+    <string name="admin_confirm_delete">Are you sure you want to delete this customer?</string>
+    <string name="admin_delete_success">Customer deleted successfully</string>
+    <string name="admin_delete_error">Error deleting customer</string>
+    <string name="admin_add_admin_title">Add New Admin</string>
+    <string name="admin_create_offer">Create Special Offer</string>
+    <string name="admin_manage_offers_title">Manage Special Offers</string>
+    
+    <!-- Admin Dashboard Stats -->
+    <string name="total_users">Total Users</string>
+    <string name="total_reservations">Total Reservations</string>
+    <string name="gender_distribution">Gender Distribution</string>
+    <string name="male">Male</string>
+    <string name="female">Female</string>
+    <string name="top_countries_by_reservations">Top Countries by Reservations</string>
+    
+    <!-- Delete Customers -->
+    <string name="delete_customers_title">Customer Management</string>
+    <string name="delete_customers_subtitle">View and manage customer accounts</string>
+    <string name="delete">Delete</string>
+    <string name="no_customers_found">No Customers Found</string>
+    <string name="no_customers_message">There are currently no customer accounts in the system.</string>
+    
+    <!-- All Reservations -->
+    <string name="all_reservations_title">All Reservations</string>
+    <string name="total_reservations_label">Total:</string>
+    <string name="no_reservations_found">No Reservations Found</string>
+    <string name="no_reservations_message">There are currently no reservations in the system.</string>
+    
+    <!-- Manage Special Offers -->
+    <string name="manage_special_offers_title">Manage Special Offers</string>
+    <string name="manage_offers_subtitle">Create and manage special offers for properties</string>
+    <string name="no_properties_message">No properties available to manage offers for.</string>
+    <string name="offer_description">Offer Description</string>
+    <string name="offer_description_hint">Enter special offer details...</string>
+    <string name="discount_percent">Discount Percentage (Optional)</string>
+    <string name="discount_percent_hint">e.g., 20</string>
+    <string name="discount_note">Note: Discount percentage is for display purposes only</string>
+    
+    <!-- Add New Admin -->
+    <string name="add_new_admin_title">Add New Admin</string>
+    <string name="add_admin_subtitle">Create a new administrator account</string>
+    <string name="admin_email">Admin Email</string>
+    <string name="admin_password">Admin Password</string>
+    <string name="confirm_admin_password">Confirm Password</string>
+    <string name="first_name">First Name</string>
+    <string name="last_name">Last Name</string>
+    <string name="gender">Gender</string>
+    <string name="country">Country</string>
+    <string name="create_admin_account">Create Admin Account</string>
+    <string name="security_note_title">Security Note</string>
+    <string name="security_note_message">Admin accounts have full access to the system. Only create admin accounts for trusted individuals.</string>
 </resources>

@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    tools:showIn="navigation_view">
+
+    <group android:checkableBehavior="single">
+        <item
+            android:id="@+id/nav_admin_dashboard"
+            android:icon="@drawable/ic_dashboard"
+            android:title="@string/nav_admin_dashboard" />
+        
+        <item
+            android:id="@+id/nav_admin_delete_customers"
+            android:icon="@drawable/ic_delete_user"
+            android:title="@string/nav_admin_delete_customers" />
+        
+        <item
+            android:id="@+id/nav_admin_all_reservations"
+            android:icon="@drawable/ic_reservations"
+            android:title="@string/nav_admin_all_reservations" />
+        
+        <item
+            android:id="@+id/nav_admin_manage_offers"
+            android:icon="@drawable/ic_featured"
+            android:title="@string/nav_admin_manage_offers" />
+        
+        <item
+            android:id="@+id/nav_admin_add_admin"
+            android:icon="@drawable/ic_person_add"
+            android:title="@string/nav_admin_add_admin" />
+        
+        <item
+            android:id="@+id/nav_admin_properties"
+            android:icon="@drawable/ic_properties"
+            android:title="@string/nav_properties" />
+    </group>
+
+    <item android:title="@string/nav_other">
+        <menu>
+            <item
+                android:id="@+id/nav_logout"
+                android:icon="@drawable/ic_logout"
+                android:title="@string/nav_logout" />
+        </menu>
+    </item>
+
+</menu>

@@ -13,13 +13,15 @@ public class Reservation implements Serializable {
     private String notes;
     private String visitTime;
     private String contactPhone;
-    
-    // Property details (for display purposes)
+      // Property details (for display purposes)
     private String propertyTitle;
     private String propertyLocation;
     private int propertyPrice;
     private String propertyType;
     private String propertyImageUrl;
+    
+    // Customer details (for admin)
+    private String customerName;
 
     public Reservation() {}
 
@@ -80,10 +82,23 @@ public class Reservation implements Serializable {
     public void setPropertyPrice(int propertyPrice) { this.propertyPrice = propertyPrice; }
 
     public String getPropertyType() { return propertyType; }
-    public void setPropertyType(String propertyType) { this.propertyType = propertyType; }
-
-    public String getPropertyImageUrl() { return propertyImageUrl; }
+    public void setPropertyType(String propertyType) { this.propertyType = propertyType; }    public String getPropertyImageUrl() { return propertyImageUrl; }
     public void setPropertyImageUrl(String propertyImageUrl) { this.propertyImageUrl = propertyImageUrl; }
+
+    public String getCustomerName() { return customerName; }
+    public void setCustomerName(String customerName) { this.customerName = customerName; }
+
+    // Admin-specific calculated fields
+    public double getTotalPrice() {
+        // For admin view - calculate total based on property price and stay duration
+        // This is a simplified calculation for display purposes
+        return propertyPrice > 0 ? propertyPrice : 0.0;
+    }
+
+    public int getGuests() {
+        // For admin view - default guest count (could be extended with actual field)
+        return 2; // Default guest count for display
+    }
 
     @Override
     public String toString() {

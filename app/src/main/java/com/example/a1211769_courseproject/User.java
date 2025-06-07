@@ -10,9 +10,10 @@ public class User {
     private String country;
     private String city;
     private String phoneNumber;
-
-    // Constructors
-    public User() {}
+    private String role; // "USER" or "ADMIN"    // Constructors
+    public User() {
+        this.role = "USER"; // Default role
+    }
 
     public User(String email, String firstName, String lastName, String password, 
                 String gender, String country, String city, String phoneNumber) {
@@ -24,6 +25,20 @@ public class User {
         this.country = country;
         this.city = city;
         this.phoneNumber = phoneNumber;
+        this.role = "USER"; // Default role
+    }
+
+    public User(String email, String firstName, String lastName, String password, 
+                String gender, String country, String city, String phoneNumber, String role) {
+        this.email = email;
+        this.firstName = firstName;
+        this.lastName = lastName;
+        this.password = password;
+        this.gender = gender;
+        this.country = country;
+        this.city = city;
+        this.phoneNumber = phoneNumber;
+        this.role = role;
     }
 
     // Getters and Setters
@@ -93,9 +108,19 @@ public class User {
 
     public String getPhoneNumber() {
         return phoneNumber;
+    }    public void setPhoneNumber(String phoneNumber) {
+        this.phoneNumber = phoneNumber;
     }
 
-    public void setPhoneNumber(String phoneNumber) {
-        this.phoneNumber = phoneNumber;
+    public String getRole() {
+        return role;
+    }
+
+    public void setRole(String role) {
+        this.role = role;
+    }
+
+    public boolean isAdmin() {
+        return "ADMIN".equals(role);
     }
 }
