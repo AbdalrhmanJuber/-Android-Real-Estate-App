@@ -1,7 +1,6 @@
 package com.example.a1211769_courseproject;
 
 import android.content.Context;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -22,7 +21,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 
-public class PropertyAdapter extends RecyclerView.Adapter<PropertyAdapter.PropertyViewHolder> {
+public class SimplePropertyAdapter extends RecyclerView.Adapter<SimplePropertyAdapter.PropertyViewHolder> {
 
     private List<Property> properties;
     private List<Property> propertiesFiltered;
@@ -34,7 +33,9 @@ public class PropertyAdapter extends RecyclerView.Adapter<PropertyAdapter.Proper
     public interface OnPropertyClickListener {
         void onPropertyClick(Property property);
         void onReserveClick(Property property);
-    }    public PropertyAdapter(Context context, List<Property> properties, String userEmail) {
+    }
+
+    public SimplePropertyAdapter(Context context, List<Property> properties, String userEmail) {
         this.context = context;
         this.properties = properties;
         this.propertiesFiltered = new ArrayList<>(properties);
@@ -49,7 +50,7 @@ public class PropertyAdapter extends RecyclerView.Adapter<PropertyAdapter.Proper
     @NonNull
     @Override
     public PropertyViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
-        View view = LayoutInflater.from(context).inflate(R.layout.item_property_card, parent, false);
+        View view = LayoutInflater.from(context).inflate(R.layout.item_property_card_simple, parent, false);
         return new PropertyViewHolder(view);
     }
 
@@ -122,42 +123,15 @@ public class PropertyAdapter extends RecyclerView.Adapter<PropertyAdapter.Proper
             }
         }
         notifyDataSetChanged();
-    }    public void filterBySpecialOffers() {
-        propertiesFiltered.clear();
-        for (Property property : properties) {
-            if (property.hasSpecialOffer() && property.isOfferValid()) {
-                propertiesFiltered.add(property);
-            }
-        }
-        notifyDataSetChanged();
-    }
-
-    public void filterByPromoted() {
-        propertiesFiltered.clear();
-        for (Property property : properties) {
-            if (property.isPromoted()) {
-                propertiesFiltered.add(property);
-            }
-        }
-        notifyDataSetChanged();
-    }
-
-    public void filterByOfferType(String offerType) {
-        propertiesFiltered.clear();
-        for (Property property : properties) {
-            if (property.hasSpecialOffer() && property.isOfferValid() && 
-                property.getOfferType().equals(offerType)) {
-                propertiesFiltered.add(property);
-            }
-        }
-        notifyDataSetChanged();
     }
 
     public void clearFilters() {
         propertiesFiltered.clear();
         propertiesFiltered.addAll(properties);
         notifyDataSetChanged();
-    }    public void updateProperties(List<Property> newProperties) {
+    }
+
+    public void updateProperties(List<Property> newProperties) {
         this.properties = newProperties;
         this.propertiesFiltered = new ArrayList<>(newProperties);
         notifyDataSetChanged();
@@ -169,10 +143,6 @@ public class PropertyAdapter extends RecyclerView.Adapter<PropertyAdapter.Proper
         private ImageButton btnFavorite;
         private TextView txtPropertyTitle;
         private TextView txtPropertyPrice;
-        private TextView txtOriginalPrice;
-        private TextView txtSavings;
-        private TextView txtSpecialOfferBadge;
-        private TextView txtPromotedBadge;
         private TextView txtPropertyLocation;
         private TextView txtPropertyArea;
         private TextView txtPropertyBedrooms;
@@ -181,16 +151,13 @@ public class PropertyAdapter extends RecyclerView.Adapter<PropertyAdapter.Proper
         private Button btnViewDetails;
         private Button btnReserve;
 
-        public PropertyViewHolder(@NonNull View itemView) {            super(itemView);
+        public PropertyViewHolder(@NonNull View itemView) {
+            super(itemView);
             imgProperty = itemView.findViewById(R.id.img_property);
             txtPropertyType = itemView.findViewById(R.id.txt_property_type);
             btnFavorite = itemView.findViewById(R.id.btn_favorite);
             txtPropertyTitle = itemView.findViewById(R.id.txt_property_title);
             txtPropertyPrice = itemView.findViewById(R.id.txt_property_price);
-            txtOriginalPrice = itemView.findViewById(R.id.txt_original_price);
-            txtSavings = itemView.findViewById(R.id.txt_savings);
-            txtSpecialOfferBadge = itemView.findViewById(R.id.txt_special_offer_badge);
-            txtPromotedBadge = itemView.findViewById(R.id.txt_promoted_badge);
             txtPropertyLocation = itemView.findViewById(R.id.txt_property_location);
             txtPropertyArea = itemView.findViewById(R.id.txt_property_area);
             txtPropertyBedrooms = itemView.findViewById(R.id.txt_property_bedrooms);
@@ -214,52 +181,10 @@ public class PropertyAdapter extends RecyclerView.Adapter<PropertyAdapter.Proper
             // Set property details
             txtPropertyTitle.setText(property.getTitle());
             
-            // Handle special offer pricing
+            // Show regular price only (no special offer pricing)
             NumberFormat formatter = NumberFormat.getCurrencyInstance(Locale.US);
-            
-            if (property.hasSpecialOffer() && property.isOfferValid()) {
-                // Show discounted price
-                txtPropertyPrice.setText(formatter.format(property.getDiscountedPrice()));
-                txtPropertyPrice.setTextColor(context.getResources().getColor(R.color.success_color));
-                
-                // Show original price with strikethrough
-                txtOriginalPrice.setText(formatter.format(property.getOriginalPrice()));
-                txtOriginalPrice.setVisibility(View.VISIBLE);
-                txtOriginalPrice.setPaintFlags(txtOriginalPrice.getPaintFlags() | android.graphics.Paint.STRIKE_THRU_TEXT_FLAG);
-                
-                // Show savings amount
-                txtSavings.setText("Save " + formatter.format(property.getSavingsAmount()) + "!");
-                txtSavings.setVisibility(View.VISIBLE);
-                
-                // Show special offer badge
-                txtSpecialOfferBadge.setText(property.getOfferType());
-                txtSpecialOfferBadge.setVisibility(View.VISIBLE);
-                
-                // Apply pulse animation to special offer badge
-                Animation pulse = AnimationUtils.loadAnimation(context, R.anim.pulse);
-                txtSpecialOfferBadge.startAnimation(pulse);
-            } else {
-                // Show regular price
-                txtPropertyPrice.setText(formatter.format(property.getPrice()));
-                txtPropertyPrice.setTextColor(context.getResources().getColor(R.color.primary_color));
-                
-                // Hide offer-related views
-                txtOriginalPrice.setVisibility(View.GONE);
-                txtSavings.setVisibility(View.GONE);
-                txtSpecialOfferBadge.setVisibility(View.GONE);
-            }
-            
-            // Handle promoted badge
-            if (property.isPromoted()) {
-                txtPromotedBadge.setVisibility(View.VISIBLE);
-                txtPromotedBadge.setText("FEATURED");
-                
-                // Apply bounce animation to promoted badge
-                Animation bounce = AnimationUtils.loadAnimation(context, R.anim.bounce);
-                txtPromotedBadge.startAnimation(bounce);
-            } else {
-                txtPromotedBadge.setVisibility(View.GONE);
-            }
+            txtPropertyPrice.setText(formatter.format(property.getPrice()));
+            txtPropertyPrice.setTextColor(context.getResources().getColor(R.color.primary_color));
             
             txtPropertyLocation.setText(property.getLocation());
             txtPropertyArea.setText(property.getArea());
@@ -298,7 +223,9 @@ public class PropertyAdapter extends RecyclerView.Adapter<PropertyAdapter.Proper
                 if (listener != null) {
                     listener.onReserveClick(property);
                 }
-            });            itemView.setOnClickListener(v -> {
+            });
+
+            itemView.setOnClickListener(v -> {
                 if (listener != null) {
                     listener.onPropertyClick(property);
                 }

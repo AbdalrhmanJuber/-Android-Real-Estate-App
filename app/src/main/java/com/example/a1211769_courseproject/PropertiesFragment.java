@@ -29,13 +29,13 @@ import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 import java.util.ArrayList;
 import java.util.List;
 
-public class PropertiesFragment extends Fragment implements PropertyAdapter.OnPropertyClickListener {    private RecyclerView recyclerProperties;
-    private PropertyAdapter adapter;
+public class PropertiesFragment extends Fragment implements SimplePropertyAdapter.OnPropertyClickListener {
+    private RecyclerView recyclerProperties;
+    private SimplePropertyAdapter adapter;
     private SwipeRefreshLayout swipeRefresh;
     private LinearLayout layoutEmpty;
-    private EditText editSearch;
-    private Button btnFilterType, btnFilterLocation, btnFilterPrice;
-    private Button btnFilterSpecialOffers, btnFilterPromoted, btnClearFilters;
+    private EditText editSearch;    private Button btnFilterType, btnFilterLocation, btnFilterPrice;
+    private Button btnClearFilters;
     private DatabaseHelper databaseHelper;
     private List<Property> allProperties;
     private String currentUserEmail;
@@ -67,8 +67,6 @@ public class PropertiesFragment extends Fragment implements PropertyAdapter.OnPr
         btnFilterType = view.findViewById(R.id.btn_filter_type);
         btnFilterLocation = view.findViewById(R.id.btn_filter_location);
         btnFilterPrice = view.findViewById(R.id.btn_filter_price);
-        btnFilterSpecialOffers = view.findViewById(R.id.btn_filter_special_offers);
-        btnFilterPromoted = view.findViewById(R.id.btn_filter_promoted);
         btnClearFilters = view.findViewById(R.id.btn_clear_filters);
         
         databaseHelper = new DatabaseHelper(getContext());
@@ -94,11 +92,9 @@ public class PropertiesFragment extends Fragment implements PropertyAdapter.OnPr
                 Log.w("PropertiesFragment", "User not found in database for email: " + currentUserEmail);
             }
         }
-    }
-
-    private void setupRecyclerView() {
+    }    private void setupRecyclerView() {
         allProperties = new ArrayList<>();
-        adapter = new PropertyAdapter(getContext(), allProperties, currentUserEmail);
+        adapter = new SimplePropertyAdapter(getContext(), allProperties, currentUserEmail);
         adapter.setOnPropertyClickListener(this);
         
         recyclerProperties.setLayoutManager(new LinearLayoutManager(getContext()));
@@ -127,10 +123,6 @@ public class PropertiesFragment extends Fragment implements PropertyAdapter.OnPr
         btnFilterType.setOnClickListener(v -> showTypeFilterDialog());
         btnFilterLocation.setOnClickListener(v -> showLocationFilterDialog());
         btnFilterPrice.setOnClickListener(v -> showPriceFilterDialog());
-        
-        // Special offers filter buttons
-        btnFilterSpecialOffers.setOnClickListener(v -> filterBySpecialOffers());
-        btnFilterPromoted.setOnClickListener(v -> filterByPromoted());
         btnClearFilters.setOnClickListener(v -> clearAllFilters());
     }    private void loadProperties() {
         swipeRefresh.setRefreshing(true);
@@ -145,28 +137,7 @@ public class PropertiesFragment extends Fragment implements PropertyAdapter.OnPr
             recyclerProperties.setVisibility(View.VISIBLE);
             layoutEmpty.setVisibility(View.GONE);
         }
-    }    // Special offers filter methods
-    private void filterBySpecialOffers() {
-        adapter.filterBySpecialOffers();
-        updateEmptyState();
-        
-        // Apply bounce animation to button
-        Animation bounce = AnimationUtils.loadAnimation(getContext(), R.anim.bounce);
-        btnFilterSpecialOffers.startAnimation(bounce);
-        
-        int filteredCount = adapter.getItemCount();
-        Toast.makeText(getContext(), "Found " + filteredCount + " properties with special offers", Toast.LENGTH_SHORT).show();
-    }    private void filterByPromoted() {
-        adapter.filterByPromoted();
-        updateEmptyState();
-        
-        // Apply bounce animation to button
-        Animation bounce = AnimationUtils.loadAnimation(getContext(), R.anim.bounce);
-        btnFilterPromoted.startAnimation(bounce);
-        
-        int filteredCount = adapter.getItemCount();
-        Toast.makeText(getContext(), "Found " + filteredCount + " promoted properties", Toast.LENGTH_SHORT).show();
-    }private void clearAllFilters() {
+    }    private void clearAllFilters() {
         adapter.clearFilters();
         updateEmptyState();
         
@@ -180,27 +151,7 @@ public class PropertiesFragment extends Fragment implements PropertyAdapter.OnPr
         btnClearFilters.startAnimation(fadeIn);
         
         Toast.makeText(getContext(), "All filters cleared", Toast.LENGTH_SHORT).show();
-    }
-
-    private void showOfferTypeFilterDialog() {
-        String[] offerTypes = {"All Offers", "FLASH_SALE", "EARLY_BIRD", "SEASONAL", "LIMITED_TIME", "NEW_LISTING"};
-        
-        AlertDialog.Builder builder = new AlertDialog.Builder(getContext());
-        builder.setTitle("Filter by Offer Type")
-                .setItems(offerTypes, (dialog, which) -> {
-                    String selectedOfferType = offerTypes[which];
-                    if (selectedOfferType.equals("All Offers")) {
-                        adapter.filterBySpecialOffers(); // Show all special offers
-                    } else {
-                        adapter.filterByOfferType(selectedOfferType);
-                    }
-                    updateEmptyState();
-                    Toast.makeText(getContext(), "Filtered by: " + selectedOfferType, Toast.LENGTH_SHORT).show();
-                })
-                .show();
-    }
-
-    private void showTypeFilterDialog() {
+    }    private void showTypeFilterDialog() {
         String[] types = {"All", "Apartment", "Villa", "House", "Commercial", "Land"};
         
         AlertDialog.Builder builder = new AlertDialog.Builder(getContext());
