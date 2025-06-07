@@ -148,10 +148,12 @@ public class AdminManageOffersFragment extends Fragment {
             
             if (result != null) {
                 try {
-                    List<Property> properties = JsonParser.parseProperties(result);
-                    if (properties != null && !properties.isEmpty()) {
+                    List<Property> properties = JsonParser.parseProperties(result);                    if (properties != null && !properties.isEmpty()) {
                         propertyList.clear();
                         propertyList.addAll(properties);
+                        
+                        // First, sync API properties into local database
+                        databaseHelper.syncPropertiesFromAPI(propertyList);
                         
                         // Load existing offers and promotion status from database
                         for (Property property : propertyList) {

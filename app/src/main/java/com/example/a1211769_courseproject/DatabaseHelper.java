@@ -1115,4 +1115,69 @@ public class DatabaseHelper extends SQLiteOpenHelper {
             }
         }
     }
+    
+    // Method to insert/sync API properties into local database
+    public boolean insertOrUpdateProperty(Property property) {
+        SQLiteDatabase db = this.getWritableDatabase();
+        ContentValues values = new ContentValues();
+        
+        values.put(PROPERTY_ID, property.getId());
+        values.put(PROPERTY_TITLE, property.getTitle());
+        values.put(PROPERTY_TYPE, property.getType());
+        values.put(PROPERTY_PRICE, property.getPrice());
+        values.put(PROPERTY_LOCATION, property.getLocation());
+        values.put(PROPERTY_AREA, property.getArea());
+        values.put(PROPERTY_BEDROOMS, property.getBedrooms());
+        values.put(PROPERTY_BATHROOMS, property.getBathrooms());
+        values.put(PROPERTY_IMAGE_URL, property.getImageUrl());
+        values.put(PROPERTY_DESCRIPTION, property.getDescription());
+        
+        // Set promotion fields (preserving existing values or setting defaults)
+        values.put(PROPERTY_IS_PROMOTED, property.isPromoted() ? 1 : 0);
+        values.put(PROPERTY_HAS_SPECIAL_OFFER, property.hasSpecialOffer() ? 1 : 0);
+        values.put(PROPERTY_OFFER_TYPE, property.getOfferType() != null ? property.getOfferType() : "");
+        values.put(PROPERTY_ORIGINAL_PRICE, property.getOriginalPrice());
+        values.put(PROPERTY_DISCOUNT_PERCENTAGE, property.getDiscountPercentage());
+        values.put(PROPERTY_OFFER_DESCRIPTION, property.getOfferDescription() != null ? property.getOfferDescription() : "");
+        values.put(PROPERTY_OFFER_EXPIRY_DATE, property.getOfferExpiryDate());
+        
+        try {
+            // Try to insert first
+            long result = db.insertWithOnConflict(TABLE_PROPERTIES, null, values, SQLiteDatabase.CONFLICT_IGNORE);
+            
+            if (result == -1) {
+                // Property already exists, update it (but preserve existing offer data)
+                ContentValues updateValues = new ContentValues();
+                updateValues.put(PROPERTY_TITLE, property.getTitle());
+                updateValues.put(PROPERTY_TYPE, property.getType());
+                updateValues.put(PROPERTY_PRICE, property.getPrice());
+                updateValues.put(PROPERTY_LOCATION, property.getLocation());
+                updateValues.put(PROPERTY_AREA, property.getArea());
+                updateValues.put(PROPERTY_BEDROOMS, property.getBedrooms());
+                updateValues.put(PROPERTY_BATHROOMS, property.getBathrooms());
+                updateValues.put(PROPERTY_IMAGE_URL, property.getImageUrl());
+                updateValues.put(PROPERTY_DESCRIPTION, property.getDescription());
+                // Don't update promotion fields on sync to preserve admin settings
+                
+                int updateResult = db.update(TABLE_PROPERTIES, updateValues, PROPERTY_ID + " = ?", 
+                                           new String[]{String.valueOf(property.getId())});
+                return updateResult > 0;
+            }
+            return result > 0;
+        } catch (Exception e) {
+            Log.e("DatabaseHelper", "Error inserting/updating property: " + e.getMessage());
+            return false;
+        } finally {
+            db.close();
+        }
+    }
+    
+    // Bulk sync method for multiple properties
+    public void syncPropertiesFromAPI(List<Property> apiProperties) {
+        if (apiProperties == null || apiProperties.isEmpty()) return;
+        
+        for (Property property : apiProperties) {
+            insertOrUpdateProperty(property);
+        }
+    }
 }
