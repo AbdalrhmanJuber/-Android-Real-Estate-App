@@ -447,11 +447,50 @@ public class DatabaseHelper extends SQLiteOpenHelper {
             values.put(PROPERTY_OFFER_DESCRIPTION, "");
             values.put(PROPERTY_OFFER_TYPE, "");
         }
-        
-        int result = db.update(TABLE_PROPERTIES, values, PROPERTY_ID + " = ?", 
+          int result = db.update(TABLE_PROPERTIES, values, PROPERTY_ID + " = ?", 
                               new String[]{String.valueOf(propertyId)});
         db.close();
         return result > 0;
+    }
+
+    // Get property special offer description (for admin)
+    public String getPropertySpecialOffer(int propertyId) {
+        SQLiteDatabase db = this.getReadableDatabase();
+        String offerDescription = null;
+        
+        String[] columns = {PROPERTY_OFFER_DESCRIPTION};
+        String selection = PROPERTY_ID + " = ?";
+        String[] selectionArgs = {String.valueOf(propertyId)};
+        
+        Cursor cursor = db.query(TABLE_PROPERTIES, columns, selection, selectionArgs, null, null, null);
+        
+        if (cursor.moveToFirst()) {
+            offerDescription = cursor.getString(cursor.getColumnIndexOrThrow(PROPERTY_OFFER_DESCRIPTION));
+        }
+        
+        cursor.close();
+        db.close();
+        return offerDescription;
+    }
+
+    // Check if property is promoted (for admin)
+    public boolean isPropertyPromoted(int propertyId) {
+        SQLiteDatabase db = this.getReadableDatabase();
+        boolean isPromoted = false;
+        
+        String[] columns = {PROPERTY_IS_PROMOTED};
+        String selection = PROPERTY_ID + " = ?";
+        String[] selectionArgs = {String.valueOf(propertyId)};
+        
+        Cursor cursor = db.query(TABLE_PROPERTIES, columns, selection, selectionArgs, null, null, null);
+        
+        if (cursor.moveToFirst()) {
+            isPromoted = cursor.getInt(cursor.getColumnIndexOrThrow(PROPERTY_IS_PROMOTED)) == 1;
+        }
+        
+        cursor.close();
+        db.close();
+        return isPromoted;
     }
   
     

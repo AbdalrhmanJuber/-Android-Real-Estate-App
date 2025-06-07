@@ -13,6 +13,7 @@ import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
+import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -23,7 +24,8 @@ public class AdminManageOffersFragment extends Fragment {
     private RecyclerView recyclerView;
     private PropertyOffersAdapter adapter;
     private List<Property> propertyList;
-      @Nullable
+    private SwipeRefreshLayout swipeRefresh;
+    private static final String API_URL = "https://mocki.io/v1/8345f53d-b99e-4d4d-b4cb-eea3042aa04f";    @Nullable
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.fragment_admin_manage_offers, container, false);
@@ -44,38 +46,18 @@ public class AdminManageOffersFragment extends Fragment {
         recyclerView = view.findViewById(R.id.recycler_properties_offers);
         recyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
         
+        swipeRefresh = view.findViewById(R.id.swipe_refresh);
+        swipeRefresh.setOnRefreshListener(this::loadProperties);
+        swipeRefresh.setColorSchemeResources(R.color.primary_color);
+        
         propertyList = new ArrayList<>();
         adapter = new PropertyOffersAdapter(propertyList, this::showSpecialOfferDialog, this::togglePromotedStatus);
         recyclerView.setAdapter(adapter);
     }
     
     private void loadProperties() {
-        // For now, we'll create sample properties. In a real app, you'd load from database
-        propertyList.clear();
-        
-        // Add sample properties (you can modify this to load from your JSON data)
-        try {
-            if (getArguments() != null && getArguments().getString("jsonData") != null) {
-                String jsonData = getArguments().getString("jsonData");
-                JsonParser parser = new JsonParser();
-                List<Property> properties = parser.parseProperties(jsonData);
-                propertyList.addAll(properties);
-            }
-        } catch (Exception e) {
-            // If JSON parsing fails, show empty state
-            e.printStackTrace();
-        }
-        
-        adapter.notifyDataSetChanged();
-          // Show empty state if no properties
-        View emptyState = requireView().findViewById(R.id.empty_state);
-        if (propertyList.isEmpty()) {
-            emptyState.setVisibility(View.VISIBLE);
-            recyclerView.setVisibility(View.GONE);
-        } else {
-            emptyState.setVisibility(View.GONE);
-            recyclerView.setVisibility(View.VISIBLE);
-        }
+        // Load properties from API
+        new AdminPropertyConnectionTask().execute(API_URL);
     }
     
     private void showSpecialOfferDialog(Property property) {
@@ -121,8 +103,7 @@ public class AdminManageOffersFragment extends Fragment {
             Toast.makeText(getContext(), "Failed to remove special offer", Toast.LENGTH_SHORT).show();
         }
     }
-    
-    private void togglePromotedStatus(Property property) {
+      private void togglePromotedStatus(Property property) {
         boolean newPromotedStatus = !property.isPromoted();
         boolean success = databaseHelper.setPropertyPromoted(property.getId(), newPromotedStatus);
         
@@ -134,5 +115,78 @@ public class AdminManageOffersFragment extends Fragment {
         } else {
             Toast.makeText(getContext(), "Failed to update promotion status", Toast.LENGTH_SHORT).show();
         }
+    }
+    
+    private void updateEmptyState() {
+        View emptyState = requireView().findViewById(R.id.empty_state);
+        if (propertyList.isEmpty()) {
+            emptyState.setVisibility(View.VISIBLE);
+            recyclerView.setVisibility(View.GONE);
+        } else {
+            emptyState.setVisibility(View.GONE);
+            recyclerView.setVisibility(View.VISIBLE);
+        }
+    }
+    
+    // Custom ConnectionAsyncTask for Admin Manage Offers Fragment
+    private class AdminPropertyConnectionTask extends ConnectionAsyncTask {
+        
+        public AdminPropertyConnectionTask() {
+            super(getActivity());
+        }
+        
+        @Override
+        protected void onPreExecute() {
+            super.onPreExecute();
+            swipeRefresh.setRefreshing(true);
+        }
+        
+        @Override
+        protected void onPostExecute(String result) {
+            super.onPostExecute(result);
+            swipeRefresh.setRefreshing(false);
+            
+            if (result != null) {
+                try {
+                    List<Property> properties = JsonParser.parseProperties(result);
+                    if (properties != null && !properties.isEmpty()) {
+                        propertyList.clear();
+                        propertyList.addAll(properties);
+                        
+                        // Load existing offers and promotion status from database
+                        for (Property property : propertyList) {
+                            // Load offer from database if exists
+                            String existingOffer = databaseHelper.getPropertySpecialOffer(property.getId());
+                            if (existingOffer != null && !existingOffer.trim().isEmpty()) {
+                                property.setOfferDescription(existingOffer);
+                            }
+                            
+                            // Load promotion status from database
+                            boolean isPromoted = databaseHelper.isPropertyPromoted(property.getId());
+                            property.setPromoted(isPromoted);
+                        }
+                        
+                        adapter.notifyDataSetChanged();
+                        updateEmptyState();
+                        
+                        Toast.makeText(getContext(), "Properties loaded successfully", Toast.LENGTH_SHORT).show();
+                    } else {
+                        showError("No properties found");
+                    }
+                } catch (Exception e) {
+                    e.printStackTrace();
+                    showError("Error parsing properties data");
+                }
+            } else {
+                showError("Failed to load properties. Please check your internet connection.");
+            }
+        }
+    }
+    
+    private void showError(String message) {
+        if (getContext() != null) {
+            Toast.makeText(getContext(), message, Toast.LENGTH_LONG).show();
+        }
+        updateEmptyState();
     }
 }

@@ -32,21 +32,27 @@
             android:alpha="0.9"
             android:gravity="center"
             android:layout_marginTop="4dp" />
-    </LinearLayout>
-
-    <!-- Content -->
+    </LinearLayout>    <!-- Content -->
     <FrameLayout
         android:layout_width="match_parent"
         android:layout_height="0dp"
         android:layout_weight="1">
 
-        <!-- Properties List -->
-        <androidx.recyclerview.widget.RecyclerView
-            android:id="@+id/recycler_properties_offers"
+        <!-- Swipe Refresh Layout -->
+        <androidx.swiperefreshlayout.widget.SwipeRefreshLayout
+            android:id="@+id/swipe_refresh"
             android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:padding="8dp"
-            android:clipToPadding="false" />
+            android:layout_height="match_parent">
+
+            <!-- Properties List -->
+            <androidx.recyclerview.widget.RecyclerView
+                android:id="@+id/recycler_properties_offers"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:padding="8dp"
+                android:clipToPadding="false" />
+
+        </androidx.swiperefreshlayout.widget.SwipeRefreshLayout>
 
         <!-- Empty State -->
         <LinearLayout

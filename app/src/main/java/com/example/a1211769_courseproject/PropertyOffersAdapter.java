@@ -66,11 +66,10 @@ public class PropertyOffersAdapter extends RecyclerView.Adapter<PropertyOffersAd
             btnManageOffer = itemView.findViewById(R.id.btn_manage_offer);
             btnTogglePromote = itemView.findViewById(R.id.btn_toggle_promote);
         }
-        
-        public void bind(Property property) {
+          public void bind(Property property) {
             tvTitle.setText(property.getTitle());
             tvLocation.setText(property.getLocation());
-            tvPrice.setText("$" + String.format("%.2f", property.getPrice()) + "/night");
+            tvPrice.setText("$" + String.format("%.2f", (double)property.getPrice()) + "/night");
             
             // Load property image (you can implement image loading here)
             // For now, we'll use a placeholder
