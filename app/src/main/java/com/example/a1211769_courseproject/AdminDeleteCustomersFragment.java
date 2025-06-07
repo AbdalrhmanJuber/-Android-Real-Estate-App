@@ -22,17 +22,21 @@ public class AdminDeleteCustomersFragment extends Fragment {
     private RecyclerView recyclerView;
     private CustomerManagementAdapter adapter;
     private List<User> customerList;
-    
-    @Nullable
+      @Nullable
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.fragment_admin_delete_customers, container, false);
         
         databaseHelper = new DatabaseHelper(getContext());
         initializeViews(view);
-        loadCustomers();
         
         return view;
+    }
+    
+    @Override
+    public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
+        super.onViewCreated(view, savedInstanceState);
+        loadCustomers();
     }
     
     private void initializeViews(View view) {
@@ -56,9 +60,8 @@ public class AdminDeleteCustomersFragment extends Fragment {
         }
         
         adapter.notifyDataSetChanged();
-        
-        // Show empty state if no customers
-        View emptyState = getView().findViewById(R.id.empty_state);
+          // Show empty state if no customers
+        View emptyState = requireView().findViewById(R.id.empty_state);
         if (customerList.isEmpty()) {
             emptyState.setVisibility(View.VISIBLE);
             recyclerView.setVisibility(View.GONE);

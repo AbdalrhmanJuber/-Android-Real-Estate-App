@@ -22,17 +22,21 @@ public class AdminAllReservationsFragment extends Fragment {
     private AdminReservationAdapter adapter;
     private List<Reservation> reservationList;
     private TextView tvTotalReservations;
-    
-    @Nullable
+      @Nullable
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.fragment_admin_all_reservations, container, false);
         
         databaseHelper = new DatabaseHelper(getContext());
         initializeViews(view);
-        loadAllReservations();
         
         return view;
+    }
+    
+    @Override
+    public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
+        super.onViewCreated(view, savedInstanceState);
+        loadAllReservations();
     }
     
     private void initializeViews(View view) {
@@ -55,9 +59,8 @@ public class AdminAllReservationsFragment extends Fragment {
         
         // Update total count
         tvTotalReservations.setText(String.valueOf(reservationList.size()));
-        
-        // Show empty state if no reservations
-        View emptyState = getView().findViewById(R.id.empty_state);
+          // Show empty state if no reservations
+        View emptyState = requireView().findViewById(R.id.empty_state);
         if (reservationList.isEmpty()) {
             emptyState.setVisibility(View.VISIBLE);
             recyclerView.setVisibility(View.GONE);

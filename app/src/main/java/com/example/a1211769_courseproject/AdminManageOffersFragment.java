@@ -23,17 +23,21 @@ public class AdminManageOffersFragment extends Fragment {
     private RecyclerView recyclerView;
     private PropertyOffersAdapter adapter;
     private List<Property> propertyList;
-    
-    @Nullable
+      @Nullable
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.fragment_admin_manage_offers, container, false);
         
         databaseHelper = new DatabaseHelper(getContext());
         initializeViews(view);
-        loadProperties();
         
         return view;
+    }
+    
+    @Override
+    public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
+        super.onViewCreated(view, savedInstanceState);
+        loadProperties();
     }
     
     private void initializeViews(View view) {
@@ -63,9 +67,8 @@ public class AdminManageOffersFragment extends Fragment {
         }
         
         adapter.notifyDataSetChanged();
-        
-        // Show empty state if no properties
-        View emptyState = getView().findViewById(R.id.empty_state);
+          // Show empty state if no properties
+        View emptyState = requireView().findViewById(R.id.empty_state);
         if (propertyList.isEmpty()) {
             emptyState.setVisibility(View.VISIBLE);
             recyclerView.setVisibility(View.GONE);

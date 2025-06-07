@@ -27,17 +27,21 @@ public class AdminDashboardFragment extends Fragment {
     private TextView tvTopCountry1, tvTopCountry2, tvTopCountry3;
     private TextView tvTopCountryCount1, tvTopCountryCount2, tvTopCountryCount3;
     private CardView cardUsers, cardReservations, cardGender, cardCountries;
-    
-    @Nullable
+      @Nullable
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.fragment_admin_dashboard, container, false);
         
         databaseHelper = new DatabaseHelper(getContext());
         initializeViews(view);
-        loadStats();
         
         return view;
+    }
+    
+    @Override
+    public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
+        super.onViewCreated(view, savedInstanceState);
+        loadStats();
     }
     
     private void initializeViews(View view) {
