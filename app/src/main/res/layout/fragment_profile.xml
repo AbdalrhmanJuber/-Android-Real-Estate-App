@@ -33,21 +33,20 @@
                     android:textColor="@color/primary_color"
                     android:textSize="24sp"
                     android:textStyle="bold"
-                    android:layout_marginBottom="16dp" />
-
-                <RelativeLayout
+                    android:layout_marginBottom="16dp" />                <RelativeLayout
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_gravity="center"
                     android:layout_marginBottom="16dp">
 
-                    <de.hdodenhof.circleimageview.CircleImageView
+                    <ImageView
                         android:id="@+id/profile_image"
                         android:layout_width="120dp"
                         android:layout_height="120dp"
                         android:src="@drawable/ic_person"
-                        app:civ_border_width="3dp"
-                        app:civ_border_color="@color/primary_color" />
+                        android:background="@drawable/circle_border"
+                        android:scaleType="centerCrop"
+                        android:padding="3dp" />
 
                     <com.google.android.material.floatingactionbutton.FloatingActionButton
                         android:id="@+id/fab_edit_picture"
@@ -161,8 +160,8 @@
                         android:id="@+id/et_email"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:inputType="textEmailAddress"
-                        android:enabled="false" />
+                        android:enabled="false"
+                        android:inputType="textEmailAddress" />
 
                 </com.google.android.material.textfield.TextInputLayout>
 

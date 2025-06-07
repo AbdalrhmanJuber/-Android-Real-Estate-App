@@ -15,6 +15,7 @@ import android.view.ViewGroup;
 import android.view.animation.Animation;
 import android.view.animation.AnimationUtils;
 import android.widget.Button;
+import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.Toast;
 
@@ -32,17 +33,13 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 
-import de.hdodenhof.circleimageview.CircleImageView;
-
 public class ProfileFragment extends Fragment {
     
     private static final String TAG = "ProfileFragment";
     private static final int CAMERA_REQUEST_CODE = 100;
     private static final int GALLERY_REQUEST_CODE = 101;
-    private static final int IMAGE_PICK_CODE = 102;
-    
-    // UI Components
-    private CircleImageView profileImage;
+    private static final int IMAGE_PICK_CODE = 102;    // UI Components
+    private ImageView profileImage;
     private FloatingActionButton fabEditImage;
     private TextInputEditText etFirstName, etLastName, etPhoneNumber;    private TextInputEditText etCurrentPassword, etNewPassword, etConfirmPassword;
     private TextInputLayout tilCurrentPassword, tilNewPassword, tilConfirmPassword;    private LinearLayout layoutPersonalInfo, layoutPasswordButtons;
@@ -108,8 +105,7 @@ public class ProfileFragment extends Fragment {
             }
             return;
         }
-    }
-      private void initializeViews(View view) {
+    }    private void initializeViews(View view) {
         // Profile image section
         profileImage = view.findViewById(R.id.profile_image);
         fabEditImage = view.findViewById(R.id.fab_edit_picture);
@@ -216,9 +212,7 @@ public class ProfileFragment extends Fragment {
             Log.e(TAG, "Error loading user data: " + e.getMessage());
             Toast.makeText(getContext(), "Error loading profile data", Toast.LENGTH_SHORT).show();
         }
-    }
-    
-    private void loadProfilePicture() {
+    }    private void loadProfilePicture() {
         try {
             String picturePath = databaseHelper.getUserProfilePicture(currentUserEmail);
             if (picturePath != null && !picturePath.isEmpty()) {
@@ -488,8 +482,7 @@ public class ProfileFragment extends Fragment {
                 bitmap = (Bitmap) data.getExtras().get("data");
             }
             
-            if (bitmap != null) {
-                // Save image and update profile
+            if (bitmap != null) {                // Save image and update profile
                 String imagePath = saveImageToInternalStorage(bitmap);
                 if (imagePath != null) {
                     // Update database

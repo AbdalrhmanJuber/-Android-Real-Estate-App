@@ -87,14 +87,12 @@
                     android:layout_height="wrap_content"
                     android:layout_marginTop="4dp"
                     android:orientation="horizontal"
-                    android:gravity="center_vertical">
-
-                    <ImageView
+                    android:gravity="center_vertical">                    <ImageView
                         android:layout_width="16dp"
                         android:layout_height="16dp"
                         android:layout_marginEnd="4dp"
                         android:src="@drawable/ic_location"
-                        android:tint="@color/text_secondary" />
+                        app:tint="@color/text_secondary" />
 
                     <TextView
                         android:id="@+id/txt_reservation_property_location"
@@ -151,14 +149,12 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:orientation="horizontal"
-                android:layout_marginBottom="4dp">
-
-                <ImageView
+                android:layout_marginBottom="4dp">                <ImageView
                     android:layout_width="16dp"
                     android:layout_height="16dp"
                     android:layout_marginEnd="8dp"
                     android:src="@drawable/ic_calendar"
-                    android:tint="@color/text_secondary" />
+                    app:tint="@color/text_secondary" />
 
                 <TextView
                     android:id="@+id/txt_reservation_date"
@@ -168,9 +164,7 @@
                     android:textColor="@color/text_secondary"
                     android:textSize="14sp" />
 
-            </LinearLayout>
-
-            <LinearLayout
+            </LinearLayout>            <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:orientation="horizontal"
@@ -181,7 +175,7 @@
                     android:layout_height="16dp"
                     android:layout_marginEnd="8dp"
                     android:src="@drawable/ic_time"
-                    android:tint="@color/text_secondary" />
+                    app:tint="@color/text_secondary" />
 
                 <TextView
                     android:id="@+id/txt_reservation_time"
@@ -191,9 +185,7 @@
                     android:textColor="@color/text_secondary"
                     android:textSize="14sp" />
 
-            </LinearLayout>
-
-            <LinearLayout
+            </LinearLayout>            <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:orientation="horizontal">
@@ -203,7 +195,7 @@
                     android:layout_height="16dp"
                     android:layout_marginEnd="8dp"
                     android:src="@drawable/ic_time"
-                    android:tint="@color/text_secondary" />
+                    app:tint="@color/text_secondary" />
 
                 <TextView
                     android:id="@+id/txt_reservation_phone"

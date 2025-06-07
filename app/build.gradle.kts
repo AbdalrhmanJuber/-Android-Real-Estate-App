@@ -31,13 +31,13 @@ android {
     }
 }
 
-dependencies {    implementation(libs.appcompat)
+dependencies {
+    implementation(libs.appcompat)
     implementation(libs.material)
     implementation(libs.activity)
     implementation(libs.constraintlayout)
     implementation(libs.cardview)
     implementation(libs.swiperefreshlayout)
-    implementation("de.hdodenhof:circleimageview:3.1.0")
     testImplementation(libs.junit)
     testImplementation("org.json:json:20210307")
     androidTestImplementation(libs.ext.junit)
