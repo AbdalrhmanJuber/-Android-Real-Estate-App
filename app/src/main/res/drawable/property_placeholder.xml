@@ -4,10 +4,33 @@
     android:height="150dp"
     android:viewportWidth="200"
     android:viewportHeight="150">
+
+    <!-- Background -->
     <path
         android:fillColor="#E0E0E0"
-        android:pathData="M0,0h200v150H0z"/>
+        android:pathData="M0,0h200v150H0z" />
+
+    <!-- Ground lines / placeholders -->
     <path
         android:fillColor="#BDBDBD"
-        android:pathData="M60,60h80v30H60zM70,70h60v10H70zM50,100h100v5H50zM60,110h80v5H60z"/>
+        android:pathData="M60,60h80v30H60z
+                          M70,70h60v10H70z
+                          M50,100h100v5H50z
+                          M60,110h80v5H60z" />
+
+    <!-- House base (centered around 100,75) -->
+    <path
+        android:fillColor="#CCCCCC"
+        android:pathData="M75,55L100,35L125,55V90a1,1 0 0,1 -1,1H76a1,1 0 0,1 -1,-1V55Z"/>
+
+    <!-- Door -->
+    <path
+        android:fillColor="#888888"
+        android:pathData="M93,70h14v20h-14z"/>
+
+    <!-- Roof highlight -->
+    <path
+        android:fillColor="#AAAAAA"
+        android:fillAlpha="0.3"
+        android:pathData="M100,35L125,55H75Z"/>
 </vector>
